@@ -19,6 +19,8 @@
 # misc
 .DS_Store
 *.pem
+site-version.tar.gz
+*.mp4.local
 
 # debug
 npm-debug.log*
