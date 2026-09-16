@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: '함찬원 네트워크 실습 소개',
-  description: 'Packet Tracer 실습과 학습 과정을 소개하는 한 페이지입니다.',
+  title: 'FRAME NOTE · 한글 이미지 편집기',
+  description: '이미지 위에 한글 문구를 편집하고 템플릿으로 저장하는 무로그인 편집기',
 };
 
 export default function RootLayout({
