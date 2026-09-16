@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'FRAME NOTE · 한글 이미지 편집기',
-  description: '이미지 위에 한글 문구를 편집하고 템플릿으로 저장하는 무로그인 편집기',
+  title: '오늘의 진짜 정보판 · T04',
+  description: '공개 데이터의 값과 출처, 실패 상태를 보여주는 무로그인 정보판',
 };
 
 export default function RootLayout({
