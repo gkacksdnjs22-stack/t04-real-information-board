@@ -1,6 +1,5 @@
 <!doctype html>
-<html lang="ko">
-<head>
+<html lang="ko"><head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f8f5">
@@ -148,31 +147,31 @@
   </style>
 </head>
 <body><div class="shell">
-<header class="topbar"><a class="brand" href="#today"><span class="mark" aria-hidden="true">◉</span><span class="brand-copy"><strong>오늘의 진짜 정보판</strong><span>값이 오지 않을 때도, 정직하게</span></span></a><a id="source-link" class="source-link" href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">공개 원천 ↗</a></header>
-<nav id="product-nav" class="page-nav" aria-label="날씨 메뉴"><a href="#today">현재 기온</a><a href="#history">일별 기록</a></nav>
-<main><div id="product-screen"><section id="today" class="hero" aria-labelledby="page-title"><span class="eyebrow">SEOUL · PUBLIC WEATHER DATA</span><h1 id="page-title">서울, 오늘의 기온</h1><p>오늘의 기온과 어제의 차이를 확인하세요. 연결이 끊겨도 마지막으로 확인한 기온은 남아 있습니다.</p><div class="hero-chips"><span>서울 · 대한민국</span><span>한국 표준시 KST</span></div></section>
+<header class="topbar"><a class="brand" href="?"><span class="mark" aria-hidden="true">◉</span><span class="brand-copy"><strong>오늘의 진짜 정보판</strong><span>값이 오지 않을 때도, 정직하게</span></span></a><a id="source-link" class="source-link" href="https://api.open-meteo.com/v1/forecast?latitude=37.5665&amp;longitude=126.978&amp;current=temperature_2m&amp;timezone=Asia%2FSeoul&amp;temperature_unit=celsius" target="_blank" rel="noopener noreferrer">공개 원천 ↗</a></header>
+<nav id="product-nav" class="page-nav" aria-label="날씨 메뉴" hidden=""><a href="#today">현재 기온</a><a href="#history">일별 기록</a></nav>
+<main><div id="product-screen" hidden=""><section id="today" class="hero" aria-labelledby="page-title"><span class="eyebrow">SEOUL · PUBLIC WEATHER DATA</span><h1 id="page-title">서울, 오늘의 기온</h1><p>오늘의 기온과 어제의 차이를 확인하세요. 연결이 끊겨도 마지막으로 확인한 기온은 남아 있습니다.</p><div class="hero-chips"><span>서울 · 대한민국</span><span>한국 표준시 KST</span></div></section>
 <div class="toolbar"><p class="toolbar-note">서울 · 대한민국<br>출처: Open-Meteo Forecast API</p><button id="refresh-button" class="button button-primary">기온 새로고침</button></div>
-<div class="live" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><p id="live-status">공개 원천을 확인하고 있습니다.</p></div><p id="storage-notice" class="storage-notice" hidden></p><p id="freshness-label" class="freshness">실제 원천 대기</p><p id="review-mode" class="notice" hidden>공개 심사용 보존본입니다. 화면의 날짜·값은 파일에 보존된 실제 성공 조회 기록입니다. 새로 조회하기 전의 기록을 「보존된 심사 기록」에서 그대로 확인할 수 있습니다.</p>
-<section id="error-view" class="error-card" role="alert" aria-live="assertive" hidden>
-        <div class="error-top"><span class="error-icon" aria-hidden="true">!</span><div><h2 id="error-title">실제 값을 확인할 수 없어요</h2><p id="error-message">네트워크와 공개 원천 상태를 확인한 뒤 다시 시도해 주세요.</p></div></div>
+<div class="live" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><p id="live-status">실제 현재 기온 13.8 °C. 출처 시각 2026-10-02T09:00, 조회 시각 2026. 10. 02. 09:12:02, 기준 시간대 Asia/Seoul.</p></div><p id="storage-notice" class="storage-notice" hidden=""></p><p id="freshness-label" class="freshness">방금 확인한 기온</p><p id="review-mode" class="notice" hidden="">공개 심사용 보존본입니다. 화면의 날짜·값은 파일에 보존된 실제 성공 조회 기록입니다. 새로 조회하기 전의 기록을 「보존된 심사 기록」에서 그대로 확인할 수 있습니다.</p>
+<section id="error-view" class="error-card" role="alert" aria-live="assertive" hidden="">
+        <div class="error-top"><span class="error-icon" aria-hidden="true">!</span><div><h2 id="error-title">네트워크 요청에 실패했어요</h2><p id="error-message">공개 원천에 연결할 수 없습니다. 인터넷 연결과 브라우저의 네트워크 접근을 확인해 주세요.</p></div></div>
         <button id="retry-button" class="button" type="button"><span aria-hidden="true">↻</span> 다시 시도</button>
-      </section><section id="fresh-view" class="board-card" aria-label="서울의 실제 현재 기온" hidden>
+      </section><section id="fresh-view" class="board-card" aria-label="서울의 실제 현재 기온">
         <div class="current-grid">
           <div class="value-side">
             <p class="metric-kicker">서울 현재 기온</p>
             <p class="location">서울 · 대한민국</p>
-            <div class="value-line"><span id="value-view" class="value">—</span><span id="unit-view" class="unit">°C</span></div>
+            <div class="value-line"><span id="value-view" class="value">13.8</span><span id="unit-view" class="unit">°C</span></div>
             <p class="metric-name">현재 기온 · 2 m</p>
           </div>
           <div class="source-time-card" aria-label="원천 시각과 조회 시각">
             <div class="time-item">
               <span class="time-label">기온 기준 시각</span>
-              <time id="source-time-view" class="time-value">—</time>
+              <time id="source-time-view" class="time-value" datetime="2026-10-02T09:00+09:00">2026-10-02T09:00 (Asia/Seoul)</time>
               <span class="time-note">기상 자료의 기준 시각 · KST</span>
             </div>
             <div class="time-item">
               <span class="time-label">이 화면의 조회 시각</span>
-              <time id="fetch-time-view" class="time-value">—</time>
+              <time id="fetch-time-view" class="time-value" datetime="2026-10-02T00:12:02.872Z">2026. 10. 02. 09:12:02 (Asia/Seoul)</time>
               <span class="time-note">성공 응답의 수신 시각 · Asia/Seoul</span>
             </div>
           </div>
@@ -180,23 +179,87 @@
         <dl class="provenance-grid">
           <div class="provenance-item"><dt>출처</dt><dd><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo 공개 Forecast API</a></dd></div>
           <div class="provenance-item"><dt>기준 시간대</dt><dd id="timezone-view">Asia/Seoul</dd></div>
-          <div class="provenance-item" data-technical hidden><dt>원 응답 값 · 원 필드</dt><dd id="raw-value-view">—</dd></div>
-          <div class="provenance-item" data-technical hidden><dt>정규화 후 저장값</dt><dd id="stored-value-view">—</dd></div>
-          <div class="provenance-item" data-technical hidden><dt>화면 표시값</dt><dd id="screen-value-view">—</dd></div>
-          <div class="provenance-item" data-technical hidden><dt>저장된 원천 시각</dt><dd id="raw-time-view">—</dd></div>
-          <div class="provenance-item" data-technical hidden><dt>값을 정의하는 필드</dt><dd>current.temperature_2m</dd></div>
-          <div class="provenance-item"><dt>데이터 원본</dt><dd><a id="source-url-view" href="https://api.open-meteo.com/" target="_blank" rel="noopener noreferrer">요청 URL 보기</a></dd></div>
+          
+          
+          
+          
+          
+          <div class="provenance-item"><dt>데이터 원본</dt><dd><a id="source-url-view" href="https://api.open-meteo.com/v1/forecast?latitude=37.5665&amp;longitude=126.978&amp;current=temperature_2m&amp;timezone=Asia%2FSeoul&amp;temperature_unit=celsius" target="_blank" rel="noopener noreferrer">Open-Meteo 원천 요청 URL 보기</a></dd></div>
         </dl>
-        <p id="record-status" class="record-status">실제 정상 응답을 확인하면 날짜별 저장 결과를 안내합니다.</p>
-      </section><section id="last-value-section" class="last-card" aria-label="마지막 정상값" hidden>
+        <p id="record-status" class="record-status">오늘 확인한 기온을 저장했습니다.</p>
+      </section><section id="last-value-section" class="last-card" aria-label="마지막 정상값" hidden="">
         <p class="last-title">마지막으로 확인한 기온</p>
-        <p id="last-good-value" class="last-value">—</p>
-        <p id="last-good-meta" class="last-meta">—</p>
+        <p id="last-good-value" class="last-value">13.2 °C</p>
+        <p id="last-good-meta" class="last-meta">마지막 정상 조회 2026. 10. 02. 08:58:17. 새 응답을 확인하는 중입니다.</p>
       </section>
 <div id="history" class="anchor"></div><section class="section-card" aria-labelledby="history-title">
         <div class="section-head"><div><h2 id="history-title">일별 기온 기록</h2><p>날짜별로 마지막에 확인한 기온을 보여 줍니다. 어제 기록이 있으면 오늘과 비교할 수 있습니다.</p></div></div>
-        <div id="daily-log" class="log-list" aria-live="polite"><p class="empty-log">실제 공개 원천에 접속해 정상 응답을 확인하는 중입니다.</p></div>
-        <div class="change-box"><span class="change-label">어제 대비 기온 변화</span><strong id="change-view" class="change-value">—</strong><p id="change-explanation" class="change-explanation">서로 다른 KST 날짜의 실제 저장값이 있어야 계산합니다.</p></div>
+        <div id="daily-log" class="log-list" aria-live="polite"><article class="log-row"><div class="log-main"><strong>2026-10-02 KST</strong><span>13.8 °C</span></div><p class="log-detail">기온 기준 2026-10-02 09:00 · 확인 2026. 10. 02. 09:12:02</p><details><summary>출처와 원자료</summary><a href="https://api.open-meteo.com/v1/forecast?latitude=37.5665&amp;longitude=126.978&amp;current=temperature_2m&amp;timezone=Asia%2FSeoul&amp;temperature_unit=celsius" target="_blank" rel="noopener noreferrer">공개 원천 URL</a><details><summary>저장 원자료 JSON</summary><pre style="overflow: auto;">{
+  "source_observed_at": "2026-10-02T00:00:00.000Z",
+  "normalized_reading": {
+    "signal_id": "seoul-temperature-2m",
+    "normalized_value": 13.8,
+    "unit": "°C",
+    "source_name": "Open-Meteo",
+    "source_url": "https://api.open-meteo.com/v1/forecast?latitude=37.5665&amp;longitude=126.978&amp;current=temperature_2m&amp;timezone=Asia%2FSeoul&amp;temperature_unit=celsius",
+    "source_time": "2026-10-02T00:00:00.000Z",
+    "fetched_at": "2026-10-02T00:12:02.872Z",
+    "record_timezone": "Asia/Seoul",
+    "record_date": "2026-10-02"
+  },
+  "raw_response": {
+    "latitude": 37.55,
+    "longitude": 127,
+    "generationtime_ms": 0.015020370483398438,
+    "utc_offset_seconds": 32400,
+    "timezone": "Asia/Seoul",
+    "timezone_abbreviation": "GMT+9",
+    "elevation": 34,
+    "current_units": {
+      "time": "iso8601",
+      "interval": "seconds",
+      "temperature_2m": "°C"
+    },
+    "current": {
+      "time": "2026-10-02T09:00",
+      "interval": 900,
+      "temperature_2m": 13.8
+    }
+  }
+}</pre></details></details></article><article class="log-row"><div class="log-main"><strong>2026-10-01 KST</strong><span>19.7 °C</span></div><p class="log-detail">기온 기준 2026-10-01 16:45 · 확인 2026. 10. 01. 16:58:11</p><details><summary>출처와 원자료</summary><a href="https://api.open-meteo.com/v1/forecast?latitude=37.5665&amp;longitude=126.978&amp;current=temperature_2m&amp;timezone=Asia%2FSeoul&amp;temperature_unit=celsius" target="_blank" rel="noopener noreferrer">공개 원천 URL</a><details><summary>저장 원자료 JSON</summary><pre style="overflow: auto;">{
+  "source_observed_at": "2026-10-01T07:45:00.000Z",
+  "normalized_reading": {
+    "signal_id": "seoul-temperature-2m",
+    "normalized_value": 19.7,
+    "unit": "°C",
+    "source_name": "Open-Meteo",
+    "source_url": "https://api.open-meteo.com/v1/forecast?latitude=37.5665&amp;longitude=126.978&amp;current=temperature_2m&amp;timezone=Asia%2FSeoul&amp;temperature_unit=celsius",
+    "source_time": "2026-10-01T07:45:00.000Z",
+    "fetched_at": "2026-10-01T07:58:11.462Z",
+    "record_timezone": "Asia/Seoul",
+    "record_date": "2026-10-01"
+  },
+  "raw_response": {
+    "latitude": 37.55,
+    "longitude": 127,
+    "generationtime_ms": 0.03254413604736328,
+    "utc_offset_seconds": 32400,
+    "timezone": "Asia/Seoul",
+    "timezone_abbreviation": "GMT+9",
+    "elevation": 34,
+    "current_units": {
+      "time": "iso8601",
+      "interval": "seconds",
+      "temperature_2m": "°C"
+    },
+    "current": {
+      "time": "2026-10-01T16:45",
+      "interval": 900,
+      "temperature_2m": 19.7
+    }
+  }
+}</pre></details></details></article></div>
+        <div class="change-box"><span class="change-label">어제 대비 기온 변화</span><strong id="change-view" class="change-value">-5.9 °C</strong><p id="change-explanation" class="change-explanation">2026-10-02 저장값 − 2026-10-01 저장값 = -5.9 °C. 일별 정규화 값에서 다시 계산했습니다.</p></div>
         <p class="integrity-note">어제 대비 = 오늘 기온 − 어제 기온.</p>
       </section>
 
@@ -205,7 +268,7 @@
         <p class="source-attribution">출처: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> · <a href="https://open-meteo.com/en/docs" target="_blank" rel="noopener noreferrer">Forecast API 설명</a>. 값은 서울 좌표의 기상 모델 기반 현재 기온이며 관측소의 직접 계측값과 다를 수 있습니다. 기온 기준 시각과 이 화면에서 확인한 시각을 함께 표시합니다.</p>
         <p class="source-attribution">기록은 이 브라우저에 저장됩니다. 같은 브라우저에서 다시 열면 이어서 볼 수 있으며, 저장 공간을 지우면 기록도 사라집니다.</p>
       </section>
-</div><div id="support-screen" hidden><div class="support-heading"><span class="eyebrow">확인 도구</span><h1 id="support-title">검사 화면</h1><p><a href="?">← 날씨 정보판으로 돌아가기</a></p></div><div id="inspection-screen" hidden><section class="section-card" aria-labelledby="integrity-title">
+</div><div id="support-screen"><div class="support-heading"><span class="eyebrow">확인 도구</span><h1 id="support-title">제출 도구</h1><p><a href="?">← 날씨 정보판으로 돌아가기</a></p></div><div id="inspection-screen" hidden=""><section class="section-card" aria-labelledby="integrity-title">
         <div class="section-head"><div><h2 id="integrity-title">원자료 · 저장값 · 화면값 대조</h2><p>성공한 실제 한 건의 응답 값을 저장 규칙과 표시 규칙에 따라 비교합니다. 이 대조에는 합성 시험값을 섞지 않습니다.</p></div></div>
         <div class="compare-grid" aria-label="원자료 저장값 화면값 대조 기준">
           <div class="compare-item"><span>원자료 값</span><strong>current.temperature_2m</strong></div>
@@ -214,22 +277,36 @@
         </div>
         <p class="integrity-note">정상 응답이 오면 원 응답 JSON 전체를 로컬 저장 기록에 두고, 원자료 값·저장값·화면값을 나란히 표시합니다. 값은 임의로 변환하지 않으며 소수 표시는 읽기 좋게 최대 한 자리로 맞춥니다.</p>
         
-      </section><section class="section-card"><h2>실제 이틀 기록 대조</h2><p>최근 두 일별 성공 기록의 원자료·저장값·화면값을 비교합니다. 실제 조회가 한 번뿐이면 둘째 날을 기다립니다.</p><div id="two-day-review"></div><details id="archived-review" hidden><summary>보존된 심사 기록 · 재조회 이전 원본</summary><pre id="archived-records"></pre></details></section><section id="experiment" class="section-card"><span class="eyebrow">SYNTHETIC REPLAY · 실제 날씨 아님</span><h2>데이터가 안 올 때, 직접 확인해 보세요</h2><p>아래 값 100·105·120 pt와 2026-08-24~25 날짜는 정본 합성 자료입니다. 실제 기온이나 실제 이틀의 증거로 저장하지 않습니다.</p>
-<div class="action-row"><button id="fixture-baseline" class="button button-primary">1. 정상 기준 준비 · D1-A → D1-B</button><button id="fixture-reset" class="button">합성 상태 초기화</button><button id="fixture-retry" class="button" hidden>다시 시도 · RECOVER-D2</button></div><p class="muted">2. 실패 종류를 선택하세요. 3. 다시 시도를 누르면 복구됩니다.</p><div id="fixture-buttons" class="action-row"></div><div class="replay-result"><p id="replay-status" role="status" aria-live="polite"></p><p id="fixture-explanation" role="status"></p></div><div id="replay-rows"></div><details><summary>상태와 일별 행 원자료 보기</summary><pre id="replay-state"></pre></details><details><summary>정본 fixture 9개 자동 검사</summary><button id="canonical-test" class="button">정본 전체 검사 실행</button><ol id="canonical-results"></ol></details></section>
+      <dl class="provenance-grid"><div class="provenance-item" data-technical=""><dt>원 응답 값 · 원 필드</dt><dd id="raw-value-view">13.8 °C</dd></div><div class="provenance-item" data-technical=""><dt>정규화 후 저장값</dt><dd id="stored-value-view">13.8 °C</dd></div><div class="provenance-item" data-technical=""><dt>화면 표시값</dt><dd id="screen-value-view">13.8 °C</dd></div><div class="provenance-item" data-technical=""><dt>저장된 원천 시각</dt><dd id="raw-time-view">2026-10-02T09:00</dd></div><div class="provenance-item" data-technical=""><dt>값을 정의하는 필드</dt><dd>current.temperature_2m</dd></div></dl></section><section class="section-card"><h2>실제 이틀 기록 대조</h2><p>최근 두 일별 성공 기록의 원자료·저장값·화면값을 비교합니다. 실제 조회가 한 번뿐이면 둘째 날을 기다립니다.</p><div id="two-day-review"><div class="table-wrap"><table><thead><tr><th>조회 날짜 · KST</th><th>원자료</th><th>저장값</th><th>화면값</th><th>원천 관측 시각</th></tr></thead><tbody><tr><td>2026-10-01</td><td>19.7 °C</td><td>19.7 °C</td><td>19.7 °C</td><td>2026-10-01T07:45:00.000Z</td></tr><tr><td>2026-10-02</td><td>13.8 °C</td><td>13.8 °C</td><td>13.8 °C</td><td>2026-10-02T00:00:00.000Z</td></tr></tbody></table></div><p>13.8 − 19.7 = -5.9 °C · 실제 저장값으로 재계산. 연속된 날짜이므로 어제 대비입니다.</p></div><details id="archived-review" hidden=""><summary>보존된 심사 기록 · 재조회 이전 원본</summary><pre id="archived-records"></pre></details></section><section id="experiment" class="section-card"><span class="eyebrow">SYNTHETIC REPLAY · 실제 날씨 아님</span><h2>데이터가 안 올 때, 직접 확인해 보세요</h2><p>아래 값 100·105·120 pt와 2026-08-24~25 날짜는 정본 합성 자료입니다. 실제 기온이나 실제 이틀의 증거로 저장하지 않습니다.</p>
+<div class="action-row"><button id="fixture-baseline" class="button button-primary">1. 정상 기준 준비 · D1-A → D1-B</button><button id="fixture-reset" class="button">합성 상태 초기화</button><button id="fixture-retry" class="button" hidden="">다시 시도 · RECOVER-D2</button></div><p class="muted">2. 실패 종류를 선택하세요. 3. 다시 시도를 누르면 복구됩니다.</p><div id="fixture-buttons" class="action-row"><button class="button" title="외부 출처가 인증을 거절한 응답: auth를 기록한다.">T04-AUTH-401</button><button class="button" title="가상 1일차 첫 정상 조회: 새 일별 행을 만든다.">T04-NORMAL-D1-A</button><button class="button" title="가상 1일차 두 번째 정상 조회: 새 행 없이 같은 행을 갱신한다.">T04-NORMAL-D1-B</button><button class="button" title="가상 2일차 정상 조회: 새 행과 전일 대비 +15를 만든다.">T04-NORMAL-D2</button><button class="button" title="네트워크 연결 중단: 마지막 정상값을 보존하고 offline을 기록한다.">T04-OFFLINE</button><button class="button" title="외부 출처의 호출 제한 응답: rate_limit과 Retry-After 관측값을 기록한다.">T04-RATE-429</button><button class="button" title="오류 뒤 가상 2일차 재시도 성공: fresh/none으로 회복하고 전일 대비 +15를 만든다.">T04-RECOVER-D2</button><button class="button" title="HTTP 성공이지만 필수값 타입이 바뀐 응답: schema_error를 기록한다.">T04-SCHEMA-BREAK</button><button class="button" title="제한시간보다 늦은 응답: 마지막 정상값을 보존하고 timeout을 기록한다.">T04-TIMEOUT</button></div><div class="replay-result"><p id="replay-status" role="status" aria-live="polite">합성 상태가 비었습니다.</p><p id="fixture-explanation" role="status">먼저 D1-A와 D1-B를 재생하세요.</p></div><div id="replay-rows"></div><details><summary>상태와 일별 행 원자료 보기</summary><pre id="replay-state">{
+  "schema_version": "aleph-t04-evaluation-state-v1",
+  "daily_readings": [],
+  "current_reading": null,
+  "status": null,
+  "last_delta": null,
+  "last_comparison": {
+    "state": "insufficient",
+    "direction": null,
+    "magnitude": null,
+    "unit": null
+  },
+  "last_run": null,
+  "sequence": 0
+}</pre></details><details><summary>정본 fixture 9개 자동 검사</summary><button id="canonical-test" class="button">정본 전체 검사 실행</button><ol id="canonical-results"></ol></details></section>
 <details class="section-card"><summary>추가 저장·날짜 코드 검사</summary><section class="section-card" aria-labelledby="tests-title">
         <div class="test-toggle-row">
           <div><h2 id="tests-title">실패·날짜 시험 재생</h2><p>아래는 합성 시험값만 사용하는 로컬 재생입니다. 실제 공개 관측/저장 기록에 추가되지 않습니다.</p></div>
           <button id="test-toggle" class="button" type="button" aria-expanded="false" aria-controls="test-panel">시험 열기</button>
         </div>
-        <div id="test-panel" class="test-panel" hidden>
+        <div id="test-panel" class="test-panel" hidden="">
           <p id="test-summary" class="test-summary">시험을 시작하면 결과가 여기에 표시됩니다.</p>
           <ol id="test-results" class="test-results"></ol>
           <div class="test-result-actions"><button id="reset-tests" class="button" type="button">시험 다시 재생</button></div>
           <p class="integrity-note">다섯 실패 fixture는 느린 응답·HTTP 401/403·HTTP 429·오프라인·형식 변경입니다. 각 재생이 stale/error와 마지막 정상값 보존을 확인한 뒤 합성 recover-d2가 fresh/none과 새 날짜 한 건으로 복구하는지 확인합니다.</p>
         </div>
       </section></details>
-</div><div id="submission-screen" hidden><section id="prepare" class="section-card"><span class="eyebrow">REVIEW & SUBMISSION</span><h2>실제 조회값을 ALEPH 과정 기록에 옮기기</h2><p>아래 항목은 저장된 실제 기록에서 가져옵니다. 날짜를 선택한 뒤 각 값을 복사해 ALEPH의 「선택 과정 기록 남기기 → 실제 공개 원천 기록」에 붙여 넣으세요.</p><label for="receipt-day">복사할 실제 조회 날짜</label><select id="receipt-day"></select><div class="receipt-fields">
-<div><label for="receipt-url">실제 공개 원천 URL</label><div class="copy-row"><input id="receipt-url" readonly><button class="button" data-copy="receipt-url" aria-label="실제 공개 원천 URL 복사">복사</button></div></div><div><label for="receipt-time">원천 관측 시각 · RFC 3339</label><div class="copy-row"><input id="receipt-time" readonly><button class="button" data-copy="receipt-time" aria-label="원천 관측 시각 · RFC 3339 복사">복사</button></div></div><div><label for="receipt-value">정규화 값 · 숫자</label><div class="copy-row"><input id="receipt-value" readonly><button class="button" data-copy="receipt-value" aria-label="정규화 값 · 숫자 복사">복사</button></div></div><div><label for="receipt-unit">단위</label><div class="copy-row"><input id="receipt-unit" readonly><button class="button" data-copy="receipt-unit" aria-label="단위 복사">복사</button></div></div>
+</div><div id="submission-screen"><section id="prepare" class="section-card"><span class="eyebrow">REVIEW &amp; SUBMISSION</span><h2>실제 조회값을 ALEPH 과정 기록에 옮기기</h2><p>아래 항목은 저장된 실제 기록에서 가져옵니다. 날짜를 선택한 뒤 각 값을 복사해 ALEPH의 「선택 과정 기록 남기기 → 실제 공개 원천 기록」에 붙여 넣으세요.</p><label for="receipt-day">복사할 실제 조회 날짜</label><select id="receipt-day"><option value="2026-10-02">2026-10-02 · 13.8 °C</option><option value="2026-10-01">2026-10-01 · 19.7 °C</option></select><div class="receipt-fields">
+<div><label for="receipt-url">실제 공개 원천 URL</label><div class="copy-row"><input id="receipt-url" readonly=""><button class="button" data-copy="receipt-url" aria-label="실제 공개 원천 URL 복사">복사</button></div></div><div><label for="receipt-time">원천 관측 시각 · RFC 3339</label><div class="copy-row"><input id="receipt-time" readonly=""><button class="button" data-copy="receipt-time" aria-label="원천 관측 시각 · RFC 3339 복사">복사</button></div></div><div><label for="receipt-value">정규화 값 · 숫자</label><div class="copy-row"><input id="receipt-value" readonly=""><button class="button" data-copy="receipt-value" aria-label="정규화 값 · 숫자 복사">복사</button></div></div><div><label for="receipt-unit">단위</label><div class="copy-row"><input id="receipt-unit" readonly=""><button class="button" data-copy="receipt-unit" aria-label="단위 복사">복사</button></div></div>
 </div><p id="copy-status" role="status" aria-live="polite"></p><p class="notice">과정 기록은 제출·강사 승인·마스터 승인을 막는 조건이 아닙니다. 다만 정본의 실제 날짜·값 대조 평가에는 서로 다른 플랫폼 KST 날짜의 t04_day 영수증 2건이 사용됩니다. 앱 조회 뒤 같은 날에 기록을 남기고, 플랫폼의 작성 시각을 확인하세요. 이 앱은 영수증을 발급하지 않습니다.</p><a href="https://aleph-omega.vercel.app/cortex?panel=tasks" target="_blank" rel="noopener noreferrer">ALEPH 과제 화면에서 과정 기록 남기기 ↗</a></section>
 <section class="section-card"><h2>공개 심사 화면에 실제 기록 남기기</h2><p>일별 기록은 현재 브라우저에 저장됩니다. 다른 사람의 브라우저에는 자동으로 전달되지 않습니다. 실제 기록을 조회한 뒤 아래 버튼으로 보존본 HTML을 내려받아, 공개 결과물의 index.html로 배포하면 심사자가 같은 두 날짜의 기록을 볼 수 있습니다.</p><button id="export-review" class="button">현재 실제 기록을 포함한 HTML 받기</button><p id="export-status" role="status"></p><p class="muted">공개 원천 데이터와 응답만 포함합니다. 합성 실험 상태와 개인 기록은 포함하지 않습니다. 별도 증거 ZIP이나 인증 파일을 제출할 필요는 없습니다.</p></section>
 <section class="section-card"><h2>30초 확인 방법</h2><p>① 어디에서: 「검사 화면」의 실패 실험.</p><p>② 무엇을 하면: 정상 기준 준비 → T04-TIMEOUT → 다시 시도 (3단계).</p><p>③ 통과 모습: 105 pt · stale/timeout · 1행에서 120 pt · fresh/none · 2행으로 복구, 변화 +15 pt. 같은 날짜의 record ID 유지.</p><p>④ 안 될 때: 오류별 설명·다음 행동과 오래된 마지막 정상값 표시. 실제 조회가 한 번도 없으면 값을 만들지 않고 오류 표시.</p><button id="copy-guide" class="button">확인 방법 4줄 복사</button></section>
@@ -284,7 +361,7 @@ public-contract.json · 바이트 수 / SHA-256 일치
 reading-status.schema.json · 바이트 수 / SHA-256 일치
 b84ab1cc8430384ce31de6d675d34ac1458bfeaabd9cacd1017c5cac642a7c1e</pre></details></section>
 </div></div><footer><p>서울 현재 기온 · Open-Meteo · Asia/Seoul</p><p class="utility-links"><a href="?view=tests">검사 화면</a> · <a href="?view=prepare">제출 도구</a></p></footer></main></div>
-<script id="preserved-live-data" type="application/json">[]</script>
+<script id="preserved-live-data" type="application/json">[{"dateKey":"2026-10-01","sourceField":"current.temperature_2m","rawValue":19.7,"normalizedValue":19.7,"displayValue":"19.7","unit":"°C","observedAt":"2026-10-01T16:45","fetchedAt":"2026-10-01T07:58:11.462Z","timezone":"Asia/Seoul","sourceUrl":"https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.978&current=temperature_2m&timezone=Asia%2FSeoul&temperature_unit=celsius","rawResponse":{"latitude":37.55,"longitude":127,"generationtime_ms":0.03254413604736328,"utc_offset_seconds":32400,"timezone":"Asia/Seoul","timezone_abbreviation":"GMT+9","elevation":34,"current_units":{"time":"iso8601","interval":"seconds","temperature_2m":"°C"},"current":{"time":"2026-10-01T16:45","interval":900,"temperature_2m":19.7}},"record_id":"demo-seoul-temperature-2m-2026-10-01","normalized_reading":{"signal_id":"seoul-temperature-2m","normalized_value":19.7,"unit":"°C","source_name":"Open-Meteo","source_url":"https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.978&current=temperature_2m&timezone=Asia%2FSeoul&temperature_unit=celsius","source_time":"2026-10-01T07:45:00.000Z","fetched_at":"2026-10-01T07:58:11.462Z","record_timezone":"Asia/Seoul","record_date":"2026-10-01"}},{"dateKey":"2026-10-02","sourceField":"current.temperature_2m","rawValue":13.8,"normalizedValue":13.8,"displayValue":"13.8","unit":"°C","observedAt":"2026-10-02T09:00","fetchedAt":"2026-10-02T00:12:02.872Z","timezone":"Asia/Seoul","sourceUrl":"https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.978&current=temperature_2m&timezone=Asia%2FSeoul&temperature_unit=celsius","rawResponse":{"latitude":37.55,"longitude":127,"generationtime_ms":0.015020370483398438,"utc_offset_seconds":32400,"timezone":"Asia/Seoul","timezone_abbreviation":"GMT+9","elevation":34,"current_units":{"time":"iso8601","interval":"seconds","temperature_2m":"°C"},"current":{"time":"2026-10-02T09:00","interval":900,"temperature_2m":13.8}},"record_id":"demo-seoul-temperature-2m-2026-10-02","normalized_reading":{"signal_id":"seoul-temperature-2m","normalized_value":13.8,"unit":"°C","source_name":"Open-Meteo","source_url":"https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.978&current=temperature_2m&timezone=Asia%2FSeoul&temperature_unit=celsius","source_time":"2026-10-02T00:00:00.000Z","fetched_at":"2026-10-02T00:12:02.872Z","record_timezone":"Asia/Seoul","record_date":"2026-10-02"}}]</script>
 <script type="module">
 const view=new URLSearchParams(location.search).get('view');
 const support=view==='tests'||view==='prepare';document.getElementById('product-screen').hidden=support;document.getElementById('product-nav').hidden=support;document.getElementById('support-screen').hidden=!support;document.getElementById('inspection-screen').hidden=view!=='tests';document.getElementById('submission-screen').hidden=view!=='prepare';document.getElementById('support-title').textContent=view==='prepare'?'제출 도구':'검사 화면';document.querySelector('.brand').href='?';
@@ -1389,6 +1466,7 @@ el('fixture-reset').onclick=()=>{state=resetEvaluationState();render();renderRep
 
 }
 </script>
-</body>
-</html>
 
+
+
+</body></html>
