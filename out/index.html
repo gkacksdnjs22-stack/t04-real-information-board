@@ -1,0 +1,1394 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f8f5">
+  <meta name="description" content="서울의 실제 현재 기온을 Open-Meteo 공개 원천에서 조회하고, 원천 시각과 조회 시각, 저장값 대조를 표시하는 정보판입니다.">
+  <title>오늘의 진짜 정보판 · 현재 기온</title>
+  <style>
+    :root { color-scheme: light; --ink: #18352c; --muted: #6b7c73; --green: #176447; --line: #e2eae4; --surface: #fff; --canvas: #f5f8f5; --danger: #9b443a; --shadow: 0 16px 42px rgba(31, 69, 49, .075); }
+    * { box-sizing: border-box; }
+    html { min-width: 320px; background: var(--canvas); }
+    body { margin: 0; min-width: 320px; color: var(--ink); background: radial-gradient(ellipse at 88% 0%, #e5f2e8 0, transparent 31rem), var(--canvas); font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    button { font: inherit; cursor: pointer; }
+    button:disabled { opacity: .62; cursor: wait; }
+    [hidden] { display: none !important; }
+    :focus-visible { outline: 3px solid #7ab191; outline-offset: 3px; }
+    .shell { width: min(980px, calc(100% - 40px)); margin: 0 auto; }
+    .topbar { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid rgba(31, 78, 53, .1); }
+    .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+    .mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 13px; color: #f5fff6; background: linear-gradient(145deg, #28825c, #174c38); font-size: 20px; font-weight: 800; }
+    .brand-copy { display: grid; gap: 3px; }
+    .brand-copy strong { font-size: 13px; letter-spacing: -.03em; }
+    .brand-copy span { color: var(--muted); font-size: 10px; }
+    .source-link { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 999px; color: #416052; background: rgba(255,255,255,.74); font-size: 11px; font-weight: 700; text-decoration: none; }
+    main { padding: 26px 0 42px; }
+    .hero { padding: 29px 34px 30px; border: 1px solid #fff; border-radius: 23px; background: linear-gradient(118deg, #e7f3e9, #f1f7f1 58%, #e8f3ea); }
+    .eyebrow { color: var(--green); font-size: 10px; font-weight: 800; letter-spacing: .15em; }
+    h1 { margin: 11px 0 8px; color: #193e2e; font-size: clamp(31px, 5vw, 43px); letter-spacing: -.065em; line-height: 1.12; }
+    .hero p { max-width: 640px; margin: 0; color: #536d5f; font-size: 13px; line-height: 1.75; }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 17px 0 12px; }
+    .toolbar-note { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border: 1px solid #d9e6dc; border-radius: 11px; color: #245a3e; background: #fff; font-size: 12px; font-weight: 750; }
+    .button:hover:not(:disabled) { border-color: #aacbb5; background: #f5faf6; }
+    .button-primary { border-color: var(--green); color: #fff; background: var(--green); }
+    .button-primary:hover:not(:disabled) { background: #104c36; }
+    .live { display: flex; align-items: flex-start; gap: 9px; min-height: 42px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px; color: #50685b; background: rgba(255,255,255,.8); font-size: 11px; line-height: 1.55; }
+    .live p { margin: 0; }
+    .status-dot { width: 8px; height: 8px; flex: 0 0 auto; margin-top: 4px; border-radius: 50%; background: #8d9a91; }
+    .freshness { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 13px; padding: 6px 9px; border-radius: 999px; color: #33704a; background: #edf7ef; font-size: 10px; font-weight: 800; }
+    .freshness::before { width: 6px; height: 6px; border-radius: 50%; background: #2d9b62; content: ""; }
+    .board-card, .error-card, .last-card, .section-card { border: 1px solid var(--line); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); }
+    .board-card { overflow: hidden; }
+    .current-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(250px, .9fr); }
+    .value-side { padding: 27px 30px 25px; background: linear-gradient(122deg, #f0f8f1, #e8f3eb 85%); }
+    .metric-kicker { margin: 0 0 7px; color: #6f8677; font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+    .location { margin: 0; color: #294f3b; font-size: 13px; font-weight: 720; }
+    .value-line { display: flex; align-items: baseline; gap: 8px; margin-top: 17px; }
+    .value { color: #173d2d; font-size: clamp(58px, 9vw, 84px); font-weight: 730; letter-spacing: -.085em; line-height: .95; }
+    .unit { color: #547260; font-size: 22px; font-weight: 700; }
+    .metric-name { margin: 10px 0 0; color: #4d6c59; font-size: 14px; font-weight: 720; }
+    .source-time-card { align-self: stretch; display: flex; flex-direction: column; justify-content: center; gap: 19px; padding: 25px 26px; border-left: 1px solid #dfeae2; background: rgba(255,255,255,.66); }
+    .time-item { display: grid; gap: 5px; }
+    .time-label { color: #809087; font-size: 10px; font-weight: 700; }
+    .time-value { color: #345b45; font-size: 13px; font-weight: 750; line-height: 1.6; overflow-wrap: anywhere; }
+    .time-note { color: #86948b; font-size: 10px; line-height: 1.5; }
+    .provenance-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 18px 20px 20px; }
+    .provenance-item { min-width: 0; padding: 13px 14px; border: 1px solid #edf1ed; border-radius: 13px; background: #fcfdfc; }
+    .provenance-item dt { color: #809087; font-size: 10px; font-weight: 700; }
+    .provenance-item dd { margin: 6px 0 0; color: #3d5c49; font-size: 12px; font-weight: 720; line-height: 1.55; overflow-wrap: anywhere; }
+    .provenance-item dd a { color: #3f7954; text-underline-offset: 2px; }
+    .record-status { margin: 0; padding: 0 21px 18px; color: #78877e; font-size: 10px; line-height: 1.6; }
+    .error-card { padding: 22px 24px; border-color: #efdbd6; background: #fffafa; }
+    .error-top { display: flex; gap: 11px; align-items: flex-start; }
+    .error-icon { width: 32px; height: 32px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 11px; color: var(--danger); background: #fff0ed; font-weight: 800; }
+    .error-card h2 { margin: 1px 0 5px; color: #633630; font-size: 16px; letter-spacing: -.03em; }
+    .error-card p { margin: 0; color: #82645e; font-size: 12px; line-height: 1.7; }
+    .error-card .button { margin: 15px 0 0 43px; }
+    .last-card { margin-top: 13px; padding: 17px 20px; border-style: dashed; box-shadow: none; }
+    .last-title { margin: 0 0 7px; color: #826d4b; font-size: 10px; font-weight: 800; letter-spacing: .09em; }
+    .last-value { margin: 0; color: #4f4a3b; font-size: 19px; font-weight: 760; letter-spacing: -.04em; }
+    .last-meta { margin: 6px 0 0; color: #877f70; font-size: 10px; line-height: 1.6; }
+    .section-card { margin-top: 14px; padding: 21px 22px; box-shadow: none; }
+    .section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; margin-bottom: 14px; }
+    .section-head h2 { margin: 0; color: #294a37; font-size: 16px; letter-spacing: -.035em; }
+    .section-head p { max-width: 495px; margin: 4px 0 0; color: #7a8980; font-size: 10px; line-height: 1.6; }
+    .compare-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+    .compare-item { padding: 12px; border: 1px solid #e8eee9; border-radius: 12px; background: #fafcfb; }
+    .compare-item span { display: block; color: #849188; font-size: 9px; font-weight: 700; }
+    .compare-item strong { display: block; margin-top: 6px; color: #3a5845; font-size: 13px; overflow-wrap: anywhere; }
+    .integrity-note, .storage-notice { margin: 12px 0 0; padding: 12px 13px; border-radius: 11px; color: #63776b; background: #f2f7f3; font-size: 10px; line-height: 1.7; }
+    .storage-notice { border: 1px solid #f0e2c7; color: #765e32; background: #fffaf0; }
+    .source-attribution { margin: 12px 2px 0; color: #819087; font-size: 10px; line-height: 1.7; }
+    .source-attribution a { color: #4b7958; font-weight: 700; text-underline-offset: 2px; }
+    .log-list { display: grid; gap: 8px; }
+    .log-row { padding: 11px 12px; border: 1px solid #e9efea; border-radius: 12px; background: #fcfdfc; }
+    .log-main { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .log-main strong { color: #4a624f; font-size: 11px; }
+    .log-main span { color: #294e39; font-size: 13px; font-weight: 750; }
+    .log-detail { margin: 5px 0 0; color: #839087; font-size: 9px; line-height: 1.6; overflow-wrap: anywhere; }
+    .empty-log { margin: 0; padding: 14px; border: 1px dashed #dfe9e2; border-radius: 11px; color: #87948c; font-size: 11px; text-align: center; }
+    .change-box { margin-top: 10px; padding: 12px 13px; border-radius: 12px; background: #eef6f0; }
+    .change-label { display: block; color: #718276; font-size: 9px; font-weight: 750; }
+    .change-value { display: block; margin-top: 5px; color: #28533b; font-size: 20px; font-weight: 760; letter-spacing: -.04em; }
+    .change-explanation { margin: 5px 0 0; color: #718176; font-size: 9px; line-height: 1.65; }
+    .test-toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .test-toggle-row h2 { margin: 0; color: #294a37; font-size: 15px; }
+    .test-toggle-row p { margin: 4px 0 0; color: #738178; font-size: 10px; line-height: 1.6; }
+    .test-panel { margin-top: 13px; padding-top: 13px; border-top: 1px solid #e8eee9; }
+    .test-summary { margin: 0 0 8px; color: #65766a; font-size: 10px; line-height: 1.6; }
+    .test-summary.pass { color: #327149; font-weight: 800; }
+    .test-summary.fail { color: #a13f35; font-weight: 800; }
+    .test-results { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+    .test-results li { padding: 8px 9px; border-radius: 9px; font-size: 10px; line-height: 1.55; }
+    .test-pass { color: #3d694b; background: #f0f7f1; }
+    .test-fail { color: #913c33; background: #fff1ef; }
+    .test-result-actions { margin-top: 9px; }
+    footer { display: flex; justify-content: space-between; gap: 15px; margin-top: 19px; padding-top: 15px; border-top: 1px solid rgba(31,78,53,.1); color: #86928a; font-size: 9px; line-height: 1.6; }
+    footer p { margin: 0; }
+    @media (max-width: 680px) {
+      .shell { width: min(100% - 28px, 540px); }
+      .topbar { min-height: 68px; }
+      .hero { padding: 25px 23px 26px; border-radius: 19px; }
+      .current-grid { grid-template-columns: 1fr; }
+      .source-time-card { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 17px 21px; border-top: 1px solid #dfeae2; border-left: 0; }
+      .value-side { padding: 23px 23px 22px; }
+      .provenance-grid { padding: 13px; gap: 8px; }
+      .section-card { padding: 18px 16px; }
+      .section-head { display: block; }
+      .compare-grid { gap: 6px; }
+      .compare-item { padding: 10px 8px; }
+      .compare-item strong { font-size: 11px; }
+      footer { flex-direction: column; gap: 5px; }
+    }
+    @media (max-width: 430px) {
+      .shell { width: min(100% - 24px, 540px); }
+      .brand-copy strong { font-size: 11px; }
+      .brand-copy span { font-size: 9px; }
+      .source-link { padding: 8px 9px; font-size: 9px; }
+      .toolbar { align-items: flex-start; }
+      .toolbar-note { max-width: 62%; }
+      .toolbar .button { min-height: 37px; padding: 0 10px; font-size: 10px; }
+      .value { font-size: 69px; }
+      .source-time-card { padding: 15px 16px; }
+      .time-value { font-size: 11px; }
+      .provenance-item { padding: 11px 9px; }
+      .provenance-item dd { font-size: 10px; }
+      .record-status { padding: 0 15px 15px; }
+      .compare-grid { grid-template-columns: 1fr; }
+      .compare-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .compare-item strong { margin-top: 0; text-align: right; }
+      .test-toggle-row { align-items: flex-start; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+  
+    html {scroll-behavior:smooth} .page-nav{display:flex;gap:8px;flex-wrap:wrap;padding:16px 0}.page-nav a{padding:9px 14px;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;font-size:13px;font-weight:700} .hero-chips,.action-row{display:flex;flex-wrap:wrap;gap:9px;margin:16px 0}.hero-chips span{font-size:12px;padding:6px 10px;border:1px solid #cbded0;border-radius:20px}.section-card h2{font-size:21px;margin:4px 0 12px}.section-card p,.section-card li{font-size:14px;line-height:1.8}.anchor,section[id]{scroll-margin-top:20px}.notice{padding:14px 16px;background:#fff7e5;border-radius:10px;font-size:13px;line-height:1.8}.muted{color:var(--muted)} .action-row .button{white-space:normal;text-align:left} .replay-result{padding:15px;background:#edf6ef;border-radius:12px;margin:16px 0} .replay-result p:first-child{font-weight:750}.receipt-fields{display:grid;gap:14px;margin-top:18px}label{display:block;font-size:13px;font-weight:700;margin:8px 0}.copy-row{display:flex;gap:8px}input,select{font:inherit;width:100%;min-width:0;padding:12px;border:1px solid #d8e5dc;border-radius:9px;background:#fbfdfb;color:var(--ink);font-size:13px}select{max-width:320px} details{margin-top:16px}summary{cursor:pointer;font-size:14px;font-weight:700;line-height:1.7}pre{overflow:auto;max-height:400px;font-size:12px;line-height:1.6;background:#f5f8f5;padding:12px;border-radius:9px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}.table-wrap{overflow:auto}.log-detail{font-size:12px}.log-main{font-size:14px}.provenance-item dt,.time-label{font-size:12px}.provenance-item dd,.time-value{font-size:14px}.live,.freshness,.last-meta,.record-status{font-size:13px}.section-card .section-card{padding:10px;box-shadow:none;border:0}.copy-row .button{flex-shrink:0} @media(max-width:520px){.hero{padding:24px 20px}.hero h1{font-size:32px}.toolbar{align-items:flex-start}.toolbar .button{max-width:45%;text-align:left}.section-card h2{font-size:19px}.page-nav a{font-size:12px;padding:8px 10px}.source-time-card{grid-template-columns:1fr}.copy-row input{font-size:12px}th,td{padding:8px;font-size:12px}}
+  </style>
+</head>
+<body><div class="shell">
+<header class="topbar"><a class="brand" href="#today"><span class="mark" aria-hidden="true">◉</span><span class="brand-copy"><strong>오늘의 진짜 정보판</strong><span>값이 오지 않을 때도, 정직하게</span></span></a><a id="source-link" class="source-link" href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">공개 원천 ↗</a></header>
+<nav id="product-nav" class="page-nav" aria-label="날씨 메뉴"><a href="#today">현재 기온</a><a href="#history">일별 기록</a></nav>
+<main><div id="product-screen"><section id="today" class="hero" aria-labelledby="page-title"><span class="eyebrow">SEOUL · PUBLIC WEATHER DATA</span><h1 id="page-title">서울, 오늘의 기온</h1><p>오늘의 기온과 어제의 차이를 확인하세요. 연결이 끊겨도 마지막으로 확인한 기온은 남아 있습니다.</p><div class="hero-chips"><span>서울 · 대한민국</span><span>한국 표준시 KST</span></div></section>
+<div class="toolbar"><p class="toolbar-note">서울 · 대한민국<br>출처: Open-Meteo Forecast API</p><button id="refresh-button" class="button button-primary">기온 새로고침</button></div>
+<div class="live" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><p id="live-status">공개 원천을 확인하고 있습니다.</p></div><p id="storage-notice" class="storage-notice" hidden></p><p id="freshness-label" class="freshness">실제 원천 대기</p><p id="review-mode" class="notice" hidden>공개 심사용 보존본입니다. 화면의 날짜·값은 파일에 보존된 실제 성공 조회 기록입니다. 새로 조회하기 전의 기록을 「보존된 심사 기록」에서 그대로 확인할 수 있습니다.</p>
+<section id="error-view" class="error-card" role="alert" aria-live="assertive" hidden>
+        <div class="error-top"><span class="error-icon" aria-hidden="true">!</span><div><h2 id="error-title">실제 값을 확인할 수 없어요</h2><p id="error-message">네트워크와 공개 원천 상태를 확인한 뒤 다시 시도해 주세요.</p></div></div>
+        <button id="retry-button" class="button" type="button"><span aria-hidden="true">↻</span> 다시 시도</button>
+      </section><section id="fresh-view" class="board-card" aria-label="서울의 실제 현재 기온" hidden>
+        <div class="current-grid">
+          <div class="value-side">
+            <p class="metric-kicker">서울 현재 기온</p>
+            <p class="location">서울 · 대한민국</p>
+            <div class="value-line"><span id="value-view" class="value">—</span><span id="unit-view" class="unit">°C</span></div>
+            <p class="metric-name">현재 기온 · 2 m</p>
+          </div>
+          <div class="source-time-card" aria-label="원천 시각과 조회 시각">
+            <div class="time-item">
+              <span class="time-label">기온 기준 시각</span>
+              <time id="source-time-view" class="time-value">—</time>
+              <span class="time-note">기상 자료의 기준 시각 · KST</span>
+            </div>
+            <div class="time-item">
+              <span class="time-label">이 화면의 조회 시각</span>
+              <time id="fetch-time-view" class="time-value">—</time>
+              <span class="time-note">성공 응답의 수신 시각 · Asia/Seoul</span>
+            </div>
+          </div>
+        </div>
+        <dl class="provenance-grid">
+          <div class="provenance-item"><dt>출처</dt><dd><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo 공개 Forecast API</a></dd></div>
+          <div class="provenance-item"><dt>기준 시간대</dt><dd id="timezone-view">Asia/Seoul</dd></div>
+          <div class="provenance-item" data-technical hidden><dt>원 응답 값 · 원 필드</dt><dd id="raw-value-view">—</dd></div>
+          <div class="provenance-item" data-technical hidden><dt>정규화 후 저장값</dt><dd id="stored-value-view">—</dd></div>
+          <div class="provenance-item" data-technical hidden><dt>화면 표시값</dt><dd id="screen-value-view">—</dd></div>
+          <div class="provenance-item" data-technical hidden><dt>저장된 원천 시각</dt><dd id="raw-time-view">—</dd></div>
+          <div class="provenance-item" data-technical hidden><dt>값을 정의하는 필드</dt><dd>current.temperature_2m</dd></div>
+          <div class="provenance-item"><dt>데이터 원본</dt><dd><a id="source-url-view" href="https://api.open-meteo.com/" target="_blank" rel="noopener noreferrer">요청 URL 보기</a></dd></div>
+        </dl>
+        <p id="record-status" class="record-status">실제 정상 응답을 확인하면 날짜별 저장 결과를 안내합니다.</p>
+      </section><section id="last-value-section" class="last-card" aria-label="마지막 정상값" hidden>
+        <p class="last-title">마지막으로 확인한 기온</p>
+        <p id="last-good-value" class="last-value">—</p>
+        <p id="last-good-meta" class="last-meta">—</p>
+      </section>
+<div id="history" class="anchor"></div><section class="section-card" aria-labelledby="history-title">
+        <div class="section-head"><div><h2 id="history-title">일별 기온 기록</h2><p>날짜별로 마지막에 확인한 기온을 보여 줍니다. 어제 기록이 있으면 오늘과 비교할 수 있습니다.</p></div></div>
+        <div id="daily-log" class="log-list" aria-live="polite"><p class="empty-log">실제 공개 원천에 접속해 정상 응답을 확인하는 중입니다.</p></div>
+        <div class="change-box"><span class="change-label">어제 대비 기온 변화</span><strong id="change-view" class="change-value">—</strong><p id="change-explanation" class="change-explanation">서로 다른 KST 날짜의 실제 저장값이 있어야 계산합니다.</p></div>
+        <p class="integrity-note">어제 대비 = 오늘 기온 − 어제 기온.</p>
+      </section>
+
+<section class="section-card" aria-labelledby="source-about-title">
+        <div class="section-head"><div><h2 id="source-about-title">날씨 자료 안내</h2><p>기온은 Open-Meteo의 공개 기상 자료를 사용합니다.</p></div></div>
+        <p class="source-attribution">출처: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> · <a href="https://open-meteo.com/en/docs" target="_blank" rel="noopener noreferrer">Forecast API 설명</a>. 값은 서울 좌표의 기상 모델 기반 현재 기온이며 관측소의 직접 계측값과 다를 수 있습니다. 기온 기준 시각과 이 화면에서 확인한 시각을 함께 표시합니다.</p>
+        <p class="source-attribution">기록은 이 브라우저에 저장됩니다. 같은 브라우저에서 다시 열면 이어서 볼 수 있으며, 저장 공간을 지우면 기록도 사라집니다.</p>
+      </section>
+</div><div id="support-screen" hidden><div class="support-heading"><span class="eyebrow">확인 도구</span><h1 id="support-title">검사 화면</h1><p><a href="?">← 날씨 정보판으로 돌아가기</a></p></div><div id="inspection-screen" hidden><section class="section-card" aria-labelledby="integrity-title">
+        <div class="section-head"><div><h2 id="integrity-title">원자료 · 저장값 · 화면값 대조</h2><p>성공한 실제 한 건의 응답 값을 저장 규칙과 표시 규칙에 따라 비교합니다. 이 대조에는 합성 시험값을 섞지 않습니다.</p></div></div>
+        <div class="compare-grid" aria-label="원자료 저장값 화면값 대조 기준">
+          <div class="compare-item"><span>원자료 값</span><strong>current.temperature_2m</strong></div>
+          <div class="compare-item"><span>정규화·저장 규칙</span><strong>숫자 그대로 · °C</strong></div>
+          <div class="compare-item"><span>화면 규칙</span><strong>최대 소수 1자리 · °C</strong></div>
+        </div>
+        <p class="integrity-note">정상 응답이 오면 원 응답 JSON 전체를 로컬 저장 기록에 두고, 원자료 값·저장값·화면값을 나란히 표시합니다. 값은 임의로 변환하지 않으며 소수 표시는 읽기 좋게 최대 한 자리로 맞춥니다.</p>
+        
+      </section><section class="section-card"><h2>실제 이틀 기록 대조</h2><p>최근 두 일별 성공 기록의 원자료·저장값·화면값을 비교합니다. 실제 조회가 한 번뿐이면 둘째 날을 기다립니다.</p><div id="two-day-review"></div><details id="archived-review" hidden><summary>보존된 심사 기록 · 재조회 이전 원본</summary><pre id="archived-records"></pre></details></section><section id="experiment" class="section-card"><span class="eyebrow">SYNTHETIC REPLAY · 실제 날씨 아님</span><h2>데이터가 안 올 때, 직접 확인해 보세요</h2><p>아래 값 100·105·120 pt와 2026-08-24~25 날짜는 정본 합성 자료입니다. 실제 기온이나 실제 이틀의 증거로 저장하지 않습니다.</p>
+<div class="action-row"><button id="fixture-baseline" class="button button-primary">1. 정상 기준 준비 · D1-A → D1-B</button><button id="fixture-reset" class="button">합성 상태 초기화</button><button id="fixture-retry" class="button" hidden>다시 시도 · RECOVER-D2</button></div><p class="muted">2. 실패 종류를 선택하세요. 3. 다시 시도를 누르면 복구됩니다.</p><div id="fixture-buttons" class="action-row"></div><div class="replay-result"><p id="replay-status" role="status" aria-live="polite"></p><p id="fixture-explanation" role="status"></p></div><div id="replay-rows"></div><details><summary>상태와 일별 행 원자료 보기</summary><pre id="replay-state"></pre></details><details><summary>정본 fixture 9개 자동 검사</summary><button id="canonical-test" class="button">정본 전체 검사 실행</button><ol id="canonical-results"></ol></details></section>
+<details class="section-card"><summary>추가 저장·날짜 코드 검사</summary><section class="section-card" aria-labelledby="tests-title">
+        <div class="test-toggle-row">
+          <div><h2 id="tests-title">실패·날짜 시험 재생</h2><p>아래는 합성 시험값만 사용하는 로컬 재생입니다. 실제 공개 관측/저장 기록에 추가되지 않습니다.</p></div>
+          <button id="test-toggle" class="button" type="button" aria-expanded="false" aria-controls="test-panel">시험 열기</button>
+        </div>
+        <div id="test-panel" class="test-panel" hidden>
+          <p id="test-summary" class="test-summary">시험을 시작하면 결과가 여기에 표시됩니다.</p>
+          <ol id="test-results" class="test-results"></ol>
+          <div class="test-result-actions"><button id="reset-tests" class="button" type="button">시험 다시 재생</button></div>
+          <p class="integrity-note">다섯 실패 fixture는 느린 응답·HTTP 401/403·HTTP 429·오프라인·형식 변경입니다. 각 재생이 stale/error와 마지막 정상값 보존을 확인한 뒤 합성 recover-d2가 fresh/none과 새 날짜 한 건으로 복구하는지 확인합니다.</p>
+        </div>
+      </section></details>
+</div><div id="submission-screen" hidden><section id="prepare" class="section-card"><span class="eyebrow">REVIEW & SUBMISSION</span><h2>실제 조회값을 ALEPH 과정 기록에 옮기기</h2><p>아래 항목은 저장된 실제 기록에서 가져옵니다. 날짜를 선택한 뒤 각 값을 복사해 ALEPH의 「선택 과정 기록 남기기 → 실제 공개 원천 기록」에 붙여 넣으세요.</p><label for="receipt-day">복사할 실제 조회 날짜</label><select id="receipt-day"></select><div class="receipt-fields">
+<div><label for="receipt-url">실제 공개 원천 URL</label><div class="copy-row"><input id="receipt-url" readonly><button class="button" data-copy="receipt-url" aria-label="실제 공개 원천 URL 복사">복사</button></div></div><div><label for="receipt-time">원천 관측 시각 · RFC 3339</label><div class="copy-row"><input id="receipt-time" readonly><button class="button" data-copy="receipt-time" aria-label="원천 관측 시각 · RFC 3339 복사">복사</button></div></div><div><label for="receipt-value">정규화 값 · 숫자</label><div class="copy-row"><input id="receipt-value" readonly><button class="button" data-copy="receipt-value" aria-label="정규화 값 · 숫자 복사">복사</button></div></div><div><label for="receipt-unit">단위</label><div class="copy-row"><input id="receipt-unit" readonly><button class="button" data-copy="receipt-unit" aria-label="단위 복사">복사</button></div></div>
+</div><p id="copy-status" role="status" aria-live="polite"></p><p class="notice">과정 기록은 제출·강사 승인·마스터 승인을 막는 조건이 아닙니다. 다만 정본의 실제 날짜·값 대조 평가에는 서로 다른 플랫폼 KST 날짜의 t04_day 영수증 2건이 사용됩니다. 앱 조회 뒤 같은 날에 기록을 남기고, 플랫폼의 작성 시각을 확인하세요. 이 앱은 영수증을 발급하지 않습니다.</p><a href="https://aleph-omega.vercel.app/cortex?panel=tasks" target="_blank" rel="noopener noreferrer">ALEPH 과제 화면에서 과정 기록 남기기 ↗</a></section>
+<section class="section-card"><h2>공개 심사 화면에 실제 기록 남기기</h2><p>일별 기록은 현재 브라우저에 저장됩니다. 다른 사람의 브라우저에는 자동으로 전달되지 않습니다. 실제 기록을 조회한 뒤 아래 버튼으로 보존본 HTML을 내려받아, 공개 결과물의 index.html로 배포하면 심사자가 같은 두 날짜의 기록을 볼 수 있습니다.</p><button id="export-review" class="button">현재 실제 기록을 포함한 HTML 받기</button><p id="export-status" role="status"></p><p class="muted">공개 원천 데이터와 응답만 포함합니다. 합성 실험 상태와 개인 기록은 포함하지 않습니다. 별도 증거 ZIP이나 인증 파일을 제출할 필요는 없습니다.</p></section>
+<section class="section-card"><h2>30초 확인 방법</h2><p>① 어디에서: 「검사 화면」의 실패 실험.</p><p>② 무엇을 하면: 정상 기준 준비 → T04-TIMEOUT → 다시 시도 (3단계).</p><p>③ 통과 모습: 105 pt · stale/timeout · 1행에서 120 pt · fresh/none · 2행으로 복구, 변화 +15 pt. 같은 날짜의 record ID 유지.</p><p>④ 안 될 때: 오류별 설명·다음 행동과 오래된 마지막 정상값 표시. 실제 조회가 한 번도 없으면 값을 만들지 않고 오류 표시.</p><button id="copy-guide" class="button">확인 방법 4줄 복사</button></section>
+<section class="section-card"><h2>제출 전에 확인할 것</h2><ul><li>결과물 주소: 공개 HTTPS URL 한 개.</li><li>소스 주소: 전체 40자리 또는 64자리 소문자 commit을 포함한 고정 HTTPS URL 한 개.</li><li>두 주소가 새 시크릿 창에서 계정 생성·로그인·인증·초대·비밀번호·OAuth·CAPTCHA 없이 열리는지 확인.</li><li>확인법 4줄과 AI·내 판단 3줄을 실제 작업에 맞게 작성. 각각 1,500자 이내.</li><li>AI에게 맡긴 일 / 직접 판단한 일 / AI 제안을 따르지 않은 일(없으면 이유)을 구분. 본인의 판단은 본인이 작성.</li></ul><p>제출 → 강사 승인 → 마스터 승인 → 이후 로컬 일괄 채점 순서입니다. 접수·승인과 조건 충족 평가는 분리됩니다. 기다린 시간은 과제의 6~7시간 작업시간에 포함하지 않습니다.</p><details><summary>공개 자산 검증 · 파일 17개 일치</summary><p>Package aleph-t04-real-information-board-public-contract-v2 · fixture 1.1.0</p><pre>README.md · 바이트 수 / SHA-256 일치
+b9d0d4c076f8c1e1d9faf1a42d5bea42b0c47e5018e8f46af31f3798adc8d80c
+
+adapter-reset.example.js · 바이트 수 / SHA-256 일치
+94617445e79e165a9cdfb80926c458e70cb61a44c2e856be71b3d3594e6a696a
+
+criterion-registry.json · 바이트 수 / SHA-256 일치
+f645270a7872f21870846cdb6df1af46c86d315cb16d61b41482ff08f75c1688
+
+fixture-manifest.json · 바이트 수 / SHA-256 일치
+97e0e7999135f943912b3ac24d3d2855b2a22a778fde52b455a50dc2e0bc7e68
+
+fixture.schema.json · 바이트 수 / SHA-256 일치
+022a0f279fc740a04f8c04989cb7fa242456313f826b848224009709b36f9109
+
+fixtures/auth-401.json · 바이트 수 / SHA-256 일치
+43137419d6cc220dabb2d2a99e63c369070f8686393d34fd3eea741d0b1ae5fd
+
+fixtures/normal-d1-a.json · 바이트 수 / SHA-256 일치
+14bcc9267f40b4bec2ecb87f2886abbe0536905ef6d398d21ab4041f3410f696
+
+fixtures/normal-d1-b.json · 바이트 수 / SHA-256 일치
+4a9a688a94acbf8decba59f6f01991121fd03a322364239606f39872bab866b1
+
+fixtures/normal-d2.json · 바이트 수 / SHA-256 일치
+8194b41d81838446d99611b34343b12b10afcf8a3e7a56d8a5e5ad6f7afc86f4
+
+fixtures/offline.json · 바이트 수 / SHA-256 일치
+61760d554088196e2979cfde2509482fc5dfe1f2c5772e92a824ce8dde12446d
+
+fixtures/rate-429.json · 바이트 수 / SHA-256 일치
+788652bf624f91d00b35843372bc5c6dcc810712a0bf29e16c0f337052c37a11
+
+fixtures/recover-d2.json · 바이트 수 / SHA-256 일치
+fecab12b34fac4d7c053083bad220748fceca88f91e2b5a024907a34e6620b04
+
+fixtures/schema-break.json · 바이트 수 / SHA-256 일치
+21bef6532b1f9a008fcf2f4d97b7330125eaeb5de8414fafde2bb991a1b935ee
+
+fixtures/timeout.json · 바이트 수 / SHA-256 일치
+4516eca5129dcce6c43d06d76c37889a9dd27c7d4f70371c63f9d9019db3aceb
+
+normalized-reading.schema.json · 바이트 수 / SHA-256 일치
+fd073a784a38f9965620b51c2c100fb6b2bf0d9b4112c0b5c9d9f6c6703fdaa8
+
+public-contract.json · 바이트 수 / SHA-256 일치
+647d2ea2ce97005aebcbe9ccd62f380bc6efb10967729464bb1df67b3588edeb
+
+reading-status.schema.json · 바이트 수 / SHA-256 일치
+b84ab1cc8430384ce31de6d675d34ac1458bfeaabd9cacd1017c5cac642a7c1e</pre></details></section>
+</div></div><footer><p>서울 현재 기온 · Open-Meteo · Asia/Seoul</p><p class="utility-links"><a href="?view=tests">검사 화면</a> · <a href="?view=prepare">제출 도구</a></p></footer></main></div>
+<script id="preserved-live-data" type="application/json">[]</script>
+<script type="module">
+const view=new URLSearchParams(location.search).get('view');
+const support=view==='tests'||view==='prepare';document.getElementById('product-screen').hidden=support;document.getElementById('product-nav').hidden=support;document.getElementById('support-screen').hidden=!support;document.getElementById('inspection-screen').hidden=view!=='tests';document.getElementById('submission-screen').hidden=view!=='prepare';document.getElementById('support-title').textContent=view==='prepare'?'제출 도구':'검사 화면';document.querySelector('.brand').href='?';
+const technical=document.createElement('dl');technical.className='provenance-grid';document.querySelectorAll('[data-technical]').forEach(e=>{e.hidden=false;technical.append(e);});document.querySelector('#inspection-screen section').append(technical);
+
+const {applySuccessfulReading,applyError,resetEvaluationState,runFixture}=(()=>{'use strict';
+
+/* global module */
+
+// ALEPH T04 replay adapter 예제입니다.
+// 이 파일은 결정론 fixture와 reset 계약을 보여 주는 최소 참조 구현입니다.
+// 실제 앱에서는 같은 상태 전이를 자신의 DB 트랜잭션으로 옮기세요.
+
+const NORMALIZED_KEYS = Object.freeze([
+  'signal_id',
+  'normalized_value',
+  'unit',
+  'source_name',
+  'source_url',
+  'source_time',
+  'fetched_at',
+  'record_timezone',
+  'record_date'
+]);
+
+const ERROR_CODES = Object.freeze([
+  'timeout',
+  'auth',
+  'rate_limit',
+  'offline',
+  'schema_error'
+]);
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function kstDate(isoString) {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) {
+    throw new TypeError('fetched_at must be a valid ISO-8601 date-time');
+  }
+  const parts = new Intl.DateTimeFormat('en', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${byType.year}-${byType.month}-${byType.day}`;
+}
+
+function validateNormalizedReading(reading) {
+  if (!reading || typeof reading !== 'object' || Array.isArray(reading)) {
+    throw new TypeError('normalized reading must be an object');
+  }
+
+  const actualKeys = Object.keys(reading).sort();
+  const expectedKeys = [...NORMALIZED_KEYS].sort();
+  if (actualKeys.length !== expectedKeys.length || actualKeys.some((key, index) => key !== expectedKeys[index])) {
+    throw new TypeError(`normalized reading keys must be exactly: ${NORMALIZED_KEYS.join(', ')}`);
+  }
+
+  if (!/^[a-z0-9][a-z0-9._-]*$/.test(reading.signal_id) || reading.signal_id.length > 100) {
+    throw new TypeError('signal_id is invalid');
+  }
+  if (typeof reading.normalized_value !== 'number' || !Number.isFinite(reading.normalized_value)) {
+    throw new TypeError('normalized_value must be a finite number');
+  }
+  for (const field of ['unit', 'source_name']) {
+    if (typeof reading[field] !== 'string' || reading[field].trim() === '') {
+      throw new TypeError(`${field} must be a non-empty string`);
+    }
+  }
+
+  let sourceUrl;
+  try {
+    sourceUrl = new URL(reading.source_url);
+  } catch {
+    throw new TypeError('source_url must be an absolute URL');
+  }
+  if (sourceUrl.protocol !== 'https:') {
+    throw new TypeError('source_url must use HTTPS');
+  }
+
+  if (reading.source_time !== null && Number.isNaN(new Date(reading.source_time).getTime())) {
+    throw new TypeError('source_time must be a valid date-time or null');
+  }
+  if (Number.isNaN(new Date(reading.fetched_at).getTime())) {
+    throw new TypeError('fetched_at must be a valid date-time');
+  }
+  if (reading.record_timezone !== 'Asia/Seoul') {
+    throw new TypeError('record_timezone must be Asia/Seoul');
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(reading.record_date) || reading.record_date !== kstDate(reading.fetched_at)) {
+    throw new TypeError('record_date must be the Asia/Seoul date derived from fetched_at');
+  }
+
+  return true;
+}
+
+function validateStatus(status) {
+  if (!status || typeof status !== 'object' || Array.isArray(status)) return false;
+  if (status.freshness === 'fresh') return status.error_code === 'none';
+  if (status.freshness === 'stale') return ERROR_CODES.includes(status.error_code);
+  return false;
+}
+
+function resetEvaluationState() {
+  return {
+    schema_version: 'aleph-t04-evaluation-state-v1',
+    daily_readings: [],
+    current_reading: null,
+    status: null,
+    last_delta: null,
+    last_comparison: {
+      state: 'insufficient',
+      direction: null,
+      magnitude: null,
+      unit: null
+    },
+    last_run: null,
+    sequence: 0
+  };
+}
+
+function recordIdFor(reading) {
+  return `demo-${reading.signal_id}-${reading.record_date}`;
+}
+
+function comparisonFor(rows, current) {
+  const previous = rows
+    .filter((row) => row.signal_id === current.signal_id && row.record_date < current.record_date)
+    .sort((left, right) => right.record_date.localeCompare(left.record_date))[0];
+  if (!previous) {
+    return { state: 'insufficient', direction: null, magnitude: null, unit: null };
+  }
+  if (previous.unit !== current.unit) {
+    return { state: 'unit_mismatch', direction: null, magnitude: null, unit: null };
+  }
+  const signed = current.normalized_value - previous.normalized_value;
+  return {
+    state: 'comparable',
+    direction: signed > 0 ? 'increase' : signed < 0 ? 'decrease' : 'unchanged',
+    magnitude: Math.abs(signed),
+    unit: current.unit
+  };
+}
+
+function applySuccessfulReading(inputState, reading, runMeta = {}) {
+  validateNormalizedReading(reading);
+  const state = clone(inputState);
+  const existingIndex = state.daily_readings.findIndex(
+    (row) => row.signal_id === reading.signal_id && row.record_date === reading.record_date
+  );
+  const existing = existingIndex >= 0 ? state.daily_readings[existingIndex] : null;
+  const row = {
+    record_id: existing ? existing.record_id : recordIdFor(reading),
+    signal_id: reading.signal_id,
+    record_date: reading.record_date,
+    normalized_value: reading.normalized_value,
+    unit: reading.unit,
+    first_fetched_at: existing ? existing.first_fetched_at : reading.fetched_at,
+    last_fetched_at: reading.fetched_at,
+    reading: clone(reading)
+  };
+
+  if (existingIndex >= 0) state.daily_readings[existingIndex] = row;
+  else state.daily_readings.push(row);
+  state.daily_readings.sort((left, right) => left.record_date.localeCompare(right.record_date));
+
+  state.current_reading = clone(reading);
+  state.status = { freshness: 'fresh', error_code: 'none' };
+  state.last_comparison = comparisonFor(state.daily_readings, row);
+  state.last_delta = state.last_comparison.magnitude;
+  state.sequence += 1;
+  state.last_run = {
+    fixture_id: runMeta.fixture_id || null,
+    virtual_now: runMeta.virtual_now || reading.fetched_at,
+    outcome: 'success',
+    error_code: 'none',
+    retry_after_seconds: null
+  };
+  return state;
+}
+
+function applyError(inputState, errorCode, runMeta = {}) {
+  if (!ERROR_CODES.includes(errorCode)) {
+    throw new TypeError(`unsupported error code: ${errorCode}`);
+  }
+  const state = clone(inputState);
+  state.status = { freshness: 'stale', error_code: errorCode };
+  state.sequence += 1;
+  state.last_run = {
+    fixture_id: runMeta.fixture_id || null,
+    virtual_now: runMeta.virtual_now || null,
+    outcome: 'error',
+    error_code: errorCode,
+    retry_after_seconds: runMeta.retry_after_seconds ?? null
+  };
+  return state;
+}
+
+function runFixture(inputState, fixture) {
+  const meta = {
+    fixture_id: fixture.fixture_id,
+    virtual_now: fixture.virtual_now,
+    retry_after_seconds: fixture.transport.headers['retry-after']
+      ? Number(fixture.transport.headers['retry-after'])
+      : null
+  };
+
+  if (fixture.transport.mode === 'timeout') return applyError(inputState, 'timeout', meta);
+  if (fixture.transport.mode === 'offline') return applyError(inputState, 'offline', meta);
+  if (fixture.transport.status === 401 || fixture.transport.status === 403) {
+    return applyError(inputState, 'auth', meta);
+  }
+  if (fixture.transport.status === 429) return applyError(inputState, 'rate_limit', meta);
+  if (fixture.transport.status >= 200 && fixture.transport.status < 300) {
+    try {
+      return applySuccessfulReading(inputState, fixture.payload, meta);
+    } catch {
+      return applyError(inputState, 'schema_error', meta);
+    }
+  }
+  return applyError(inputState, 'schema_error', meta);
+}
+
+
+{ applySuccessfulReading, applyError, resetEvaluationState, runFixture };
+
+;return {applySuccessfulReading,applyError,resetEvaluationState,runFixture};})();
+const TIME_ZONE = "Asia/Seoul";
+const SOURCE_FIELD = "current.temperature_2m";
+const TEMPERATURE_UNIT = "°C";
+const API_ENDPOINT = "https://api.open-meteo.com/v1/forecast";
+const STORAGE_KEY = "t04-real-information-board.daily-records.v1";
+const SCHEMA_VERSION = 1;
+
+const ERROR_CODES = Object.freeze([
+  "timeout",
+  "http_401_403",
+  "rate_limit",
+  "offline",
+  "schema_changed",
+  "http_error",
+  "network_error",
+  "storage_write"
+]);
+
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const SOURCE_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/;
+const ALLOWED_SOURCE_PARAMETERS = new Set(["latitude", "longitude", "current", "timezone", "temperature_unit"]);
+
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isValidDateKey(dateKey) {
+  if (typeof dateKey !== "string" || !DATE_KEY_PATTERN.test(dateKey)) return false;
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() + 1 === month && date.getUTCDate() === day;
+}
+
+function formatDisplayValue(value) {
+  return new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 1 }).format(value);
+}
+
+function isSafeSourceUrl(sourceUrl) {
+  if (typeof sourceUrl !== "string") return false;
+  try {
+    const url = new URL(sourceUrl);
+    if (url.protocol !== "https:" || url.hostname !== "api.open-meteo.com" || url.pathname !== "/v1/forecast") return false;
+    if (url.username || url.password || url.hash) return false;
+
+    const entries = [...url.searchParams.entries()];
+    if (entries.length !== ALLOWED_SOURCE_PARAMETERS.size) return false;
+    if (entries.some(([key]) => !ALLOWED_SOURCE_PARAMETERS.has(key))) return false;
+    if (new Set(entries.map(([key]) => key)).size !== ALLOWED_SOURCE_PARAMETERS.size) return false;
+
+    const latitude = Number(url.searchParams.get("latitude"));
+    const longitude = Number(url.searchParams.get("longitude"));
+    return Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
+      && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180
+      && url.searchParams.get("timezone") === TIME_ZONE
+      && url.searchParams.get("current") === "temperature_2m"
+      && url.searchParams.get("temperature_unit") === "celsius";
+  } catch {
+    return false;
+  }
+}
+
+function dateKeyInTimeZone(value, timeZone = TIME_ZONE) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (!Number.isFinite(date.getTime())) throw new TypeError("유효한 날짜가 필요합니다.");
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  const fields = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${fields.year}-${fields.month}-${fields.day}`;
+}
+
+function normalizeWeatherResponse(payload, sourceUrl, fetchedAt = new Date()) {
+  if (!isPlainObject(payload) || !isPlainObject(payload.current) || !isPlainObject(payload.current_units)) {
+    throw new TypeError("응답에 current 또는 current_units 객체가 없습니다.");
+  }
+  if (payload.timezone !== TIME_ZONE) {
+    throw new TypeError("응답 기준 시간대가 요청한 Asia/Seoul과 다릅니다.");
+  }
+
+  const rawValue = payload.current.temperature_2m;
+  const unit = payload.current_units.temperature_2m;
+  const observedAt = payload.current.time;
+
+  if (!Number.isFinite(rawValue)) throw new TypeError("temperature_2m 값이 숫자가 아닙니다.");
+  if (unit !== TEMPERATURE_UNIT) throw new TypeError("temperature_2m 단위가 예상한 °C가 아닙니다.");
+  if (typeof observedAt !== "string" || !SOURCE_TIME_PATTERN.test(observedAt) || !Number.isFinite(Date.parse(`${observedAt}+09:00`))) {
+    throw new TypeError("current.time 형식이 예상과 다릅니다.");
+  }
+  if (!isSafeSourceUrl(sourceUrl)) {
+    throw new TypeError("공개 원천 요청 URL에 예상하지 않은 주소나 매개변수가 있습니다.");
+  }
+
+  const received = fetchedAt instanceof Date ? new Date(fetchedAt.getTime()) : new Date(fetchedAt);
+  if (!Number.isFinite(received.getTime())) throw new TypeError("유효한 조회 시각이 필요합니다.");
+
+  return {
+    dateKey: dateKeyInTimeZone(received, TIME_ZONE),
+    sourceField: SOURCE_FIELD,
+    rawValue,
+    normalizedValue: rawValue,
+    displayValue: formatDisplayValue(rawValue),
+    unit,
+    observedAt,
+    fetchedAt: received.toISOString(),
+    timezone: TIME_ZONE,
+    sourceUrl,
+    rawResponse: payload
+  };
+}
+
+function isValidDailyRecord(record) {
+  if (!isPlainObject(record)) return false;
+  if (!isValidDateKey(record.dateKey)) return false;
+  if (record.sourceField !== SOURCE_FIELD || record.timezone !== TIME_ZONE || record.unit !== TEMPERATURE_UNIT) return false;
+  if (!Number.isFinite(record.rawValue) || !Number.isFinite(record.normalizedValue)) return false;
+  if (record.rawValue !== record.normalizedValue || record.displayValue !== formatDisplayValue(record.normalizedValue)) return false;
+  if (typeof record.observedAt !== "string" || !SOURCE_TIME_PATTERN.test(record.observedAt)) return false;
+  if (!Number.isFinite(Date.parse(`${record.observedAt}+09:00`))) return false;
+  if (typeof record.fetchedAt !== "string" || !Number.isFinite(Date.parse(record.fetchedAt))) return false;
+  try {
+    if (dateKeyInTimeZone(record.fetchedAt, TIME_ZONE) !== record.dateKey) return false;
+  } catch {
+    return false;
+  }
+  if (!isSafeSourceUrl(record.sourceUrl)) return false;
+
+  const raw = record.rawResponse;
+  return isPlainObject(raw)
+    && raw.timezone === TIME_ZONE
+    && isPlainObject(raw.current)
+    && isPlainObject(raw.current_units)
+    && raw.current.temperature_2m === record.rawValue
+    && raw.current.time === record.observedAt
+    && raw.current_units.temperature_2m === record.unit;
+}
+
+function sortDailyRecords(records) {
+  if (!Array.isArray(records)) return [];
+  return records.filter(isValidDailyRecord).sort((left, right) => {
+    const byDay = left.dateKey.localeCompare(right.dateKey);
+    return byDay || left.fetchedAt.localeCompare(right.fetchedAt);
+  });
+}
+
+function upsertDailyRecord(records, record) {
+  if (!isValidDailyRecord(record)) throw new TypeError("저장할 일별 기록이 유효하지 않습니다.");
+  const byDate = new Map();
+  for (const existing of sortDailyRecords(records)) byDate.set(existing.dateKey, existing);
+  byDate.set(record.dateKey, record);
+  return [...byDate.values()].sort((left, right) => left.dateKey.localeCompare(right.dateKey));
+}
+
+function loadDailyRecords(storage) {
+  if (!storage) return { records: [], issue: "storage_unavailable" };
+
+  let serialized;
+  try {
+    serialized = storage.getItem(STORAGE_KEY);
+  } catch {
+    return { records: [], issue: "storage_read" };
+  }
+  if (serialized === null) return { records: [], issue: null };
+
+  let saved;
+  try {
+    saved = JSON.parse(serialized);
+  } catch {
+    return { records: [], issue: "storage_format" };
+  }
+  if (!isPlainObject(saved) || saved.schemaVersion !== SCHEMA_VERSION || !Array.isArray(saved.records)) {
+    return { records: [], issue: "storage_format" };
+  }
+
+  const validRecords = sortDailyRecords(saved.records);
+  const issue = validRecords.length === saved.records.length ? null : "storage_records_skipped";
+  return { records: upsertAllByDate(validRecords), issue };
+}
+
+function upsertAllByDate(records) {
+  const byDate = new Map();
+  for (const record of records) byDate.set(record.dateKey, record);
+  return [...byDate.values()].sort((left, right) => left.dateKey.localeCompare(right.dateKey));
+}
+
+function persistDailyRecord(storage, existingRecords, record) {
+  let canonical = resetEvaluationState();
+  const reading = r => ({signal_id:'seoul-temperature-2m',normalized_value:r.normalizedValue,unit:r.unit,source_name:'Open-Meteo',source_url:r.sourceUrl,source_time:new Date(r.observedAt+'+09:00').toISOString(),fetched_at:r.fetchedAt,record_timezone:r.timezone,record_date:r.dateKey});
+  for (const prior of sortDailyRecords(existingRecords)) canonical = applySuccessfulReading(canonical, reading(prior));
+  canonical = applySuccessfulReading(canonical, reading(record));
+  const records = upsertDailyRecord(existingRecords, record).map(r=>Object.assign(r,{record_id:'demo-seoul-temperature-2m-'+r.dateKey,normalized_reading:reading(r)}));
+  if (!storage) return { records, persisted: false, issue: "storage_unavailable" };
+
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify({ schemaVersion: SCHEMA_VERSION, records }));
+    return { records, persisted: true, issue: null };
+  } catch {
+    return { records, persisted: false, issue: "storage_write" };
+  }
+}
+
+function classifyHttpStatus(status) {
+  if (status === 401 || status === 403) return "http_401_403";
+  if (status === 429) return "rate_limit";
+  return "http_error";
+}
+
+function classifyFetchFailure({ timedOut = false, offline = false, schemaChanged = false } = {}) {
+  if (timedOut) return "timeout";
+  if (schemaChanged) return "schema_changed";
+  if (offline) return "offline";
+  return "network_error";
+}
+
+function transitionFailure(lastGoodRecord, errorCode) {
+  const code = ERROR_CODES.includes(errorCode) ? errorCode : "network_error";
+  return {
+    status: lastGoodRecord ? "stale" : "error",
+    errorCode: code,
+    lastGoodRecord: lastGoodRecord || null
+  };
+}
+
+function transitionSuccess(record) {
+  if (!isValidDailyRecord(record)) throw new TypeError("성공 상태에는 유효한 원천 기록이 필요합니다.");
+  return { status: "fresh", errorCode: "none", record };
+}
+
+function shiftDateKey(dateKey, dayOffset) {
+  if (!isValidDateKey(dateKey) || !Number.isInteger(dayOffset)) throw new TypeError("날짜 키와 정수 날짜 이동값이 필요합니다.");
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day + dayOffset));
+  return `${String(shifted.getUTCFullYear()).padStart(4, "0")}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}-${String(shifted.getUTCDate()).padStart(2, "0")}`;
+}
+
+function getDailyChange(records, dateKey) {
+  const validRecords = sortDailyRecords(records);
+  const current = validRecords.find((record) => record.dateKey === dateKey);
+  if (!current) return { status: "missing_current", currentDate: dateKey };
+
+  const previousDateKey = shiftDateKey(dateKey, -1);
+  const previous = validRecords.find((record) => record.dateKey === previousDateKey);
+  if (!previous) return { status: "missing_previous", current, previousDate: previousDateKey };
+
+  const rawDifference = current.normalizedValue - previous.normalizedValue;
+  return {
+    status: "ok",
+    current,
+    previous,
+    previousDate: previousDateKey,
+    rawDifference,
+    delta: Number(rawDifference.toFixed(1))
+  };
+}
+
+const SEOUL = Object.freeze({ latitude: 37.5665, longitude: 126.978 });
+
+function createRequestUrl() {
+  const url = new URL(API_ENDPOINT);
+  url.searchParams.set("latitude", String(SEOUL.latitude));
+  url.searchParams.set("longitude", String(SEOUL.longitude));
+  url.searchParams.set("current", "temperature_2m");
+  url.searchParams.set("timezone", TIME_ZONE);
+  url.searchParams.set("temperature_unit", "celsius");
+  return url.toString();
+}
+
+function isOnlineSafely(check) {
+  try {
+    return check() !== false;
+  } catch {
+    return true;
+  }
+}
+
+class BoardRequestError extends Error {
+  constructor(code, message, httpStatus = null) {
+    super(message);
+    this.name = "BoardRequestError";
+    this.code = code;
+    this.httpStatus = httpStatus;
+  }
+}
+
+function makeSnapshot(state, records, storageIssue) {
+  return {
+    state: { ...state },
+    records: [...records],
+    lastGoodRecord: state.lastGoodRecord || null,
+    storageIssue
+  };
+}
+
+function createWeatherAdapter({
+  fetchImpl = (...args) => globalThis.fetch(...args),
+  storage = null,
+  now = () => new Date(),
+  isOnline = () => typeof navigator === "undefined" || navigator.onLine !== false,
+  timeoutMs = 18000
+} = {}) {
+  const loaded = loadDailyRecords(storage);
+  try {const seed=JSON.parse(document.getElementById('preserved-live-data').textContent);const valid=sortDailyRecords(seed);if(valid.length===seed.length)loaded.records=upsertAllByDate([...valid,...loaded.records]);}catch { /* Invalid exported records are excluded. */ }
+  let records = loaded.records;
+  let storageIssue = loaded.issue;
+  let lastGoodRecord = records.length ? records[records.length - 1] : null;
+  let state = lastGoodRecord
+    ? { status: "stale", errorCode: "none", lastGoodRecord, errorMessage: "" }
+    : { status: "idle", errorCode: "none", lastGoodRecord: null, errorMessage: "" };
+
+  function snapshot() {
+    return makeSnapshot(state, records, storageIssue);
+  }
+
+  async function refresh({ onState = () => {} } = {}) {
+    state = { status: "loading", errorCode: "none", lastGoodRecord, errorMessage: "" };
+    onState(snapshot());
+
+    const controller = new AbortController();
+    let timedOut = false;
+    let timeoutId = null;
+    let completed = false;
+
+    try {
+      if (!isOnlineSafely(isOnline)) throw new BoardRequestError("offline", "브라우저가 오프라인 상태입니다.");
+      timeoutId = globalThis.setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, timeoutMs);
+
+      const requestUrl = createRequestUrl();
+      const request = await fetchImpl(requestUrl, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        signal: controller.signal
+      });
+      if (timedOut) throw new BoardRequestError("timeout", "요청이 제한 시간 안에 완료되지 않았습니다.");
+
+      if (!request || typeof request.ok !== "boolean") {
+        throw new BoardRequestError("schema_changed", "HTTP 응답 형식이 예상과 다릅니다.");
+      }
+      if (!request.ok) {
+        throw new BoardRequestError(
+          classifyHttpStatus(request.status),
+          `공개 원천이 HTTP ${request.status} 응답을 반환했습니다.`,
+          request.status
+        );
+      }
+      if (typeof request.json !== "function") {
+        throw new BoardRequestError("schema_changed", "JSON 응답을 읽을 수 없습니다.");
+      }
+
+      let payload;
+      try {
+        payload = await request.json();
+      } catch {
+        if (timedOut) throw new BoardRequestError("timeout", "응답 본문이 제한 시간 안에 도착하지 않았습니다.");
+        throw new BoardRequestError("schema_changed", "응답이 올바른 JSON 형식이 아닙니다.");
+      }
+      if (timedOut) throw new BoardRequestError("timeout", "응답 본문이 제한 시간 안에 도착하지 않았습니다.");
+
+      let record;
+      try {
+        record = normalizeWeatherResponse(payload, requestUrl, now());
+      } catch (error) {
+        throw new BoardRequestError(
+          "schema_changed",
+          error instanceof Error ? error.message : "응답 구조가 예상과 다릅니다."
+        );
+      }
+
+      const persisted = persistDailyRecord(storage, records, record);
+      records = persisted.records;
+      storageIssue = persisted.issue;
+      lastGoodRecord = record;
+      state = {
+        ...transitionSuccess(record),
+        lastGoodRecord: record,
+        persisted: persisted.persisted,
+        storageIssue,
+        errorMessage: ""
+      };
+      completed = true;
+    } catch (error) {
+      const online = isOnlineSafely(isOnline);
+      const errorCode = error instanceof BoardRequestError
+        ? error.code
+        : classifyFetchFailure({ timedOut, offline: !online });
+      state = {
+        ...transitionFailure(lastGoodRecord, errorCode),
+        httpStatus: error instanceof BoardRequestError ? error.httpStatus : null,
+        errorMessage: error instanceof Error ? error.message : "알 수 없는 요청 오류"
+      };
+    } finally {
+      if (timeoutId !== null) globalThis.clearTimeout(timeoutId);
+    }
+
+    const result = snapshot();
+    onState(result);
+    if (!completed && result.state.status === "loading") {
+      state = { ...transitionFailure(lastGoodRecord, "network_error"), errorMessage: "요청을 완료하지 못했습니다." };
+      return snapshot();
+    }
+    return result;
+  }
+
+  return {
+    refresh,
+    snapshot,
+    get requestUrl() { return createRequestUrl(); }
+  };
+}
+
+function createSyntheticAdapter() {
+  let records = [];
+  let lastGoodRecord = null;
+  let state = { status: "idle", errorCode: "none", lastGoodRecord: null };
+
+  function snapshot() {
+    return makeSnapshot(state, records, null);
+  }
+
+  return {
+    snapshot,
+    accept(record) {
+      const next = persistDailyRecord(null, records, record);
+      records = next.records;
+      lastGoodRecord = record;
+      state = { ...transitionSuccess(record), lastGoodRecord: record, persisted: false };
+      return snapshot();
+    },
+    fail(errorCode) {
+      state = transitionFailure(lastGoodRecord, errorCode);
+      return snapshot();
+    }
+  };
+}
+
+const SYNTHETIC_FAILURES = Object.freeze([
+  { id: "T04-C12", name: "느린 외부 응답", code: "timeout" },
+  { id: "T04-C13", name: "HTTP 401/403 거절", code: "http_401_403" },
+  { id: "T04-C14", name: "호출 제한 HTTP 429", code: "rate_limit" },
+  { id: "T04-C15", name: "오프라인", code: "offline" },
+  { id: "T04-C16", name: "응답 형식 변경", code: "schema_changed" }
+]);
+
+function makeSyntheticRecord({ day, observedHour, value, fetchedHour, interval = 900 }) {
+  const source = new URL(API_ENDPOINT);
+  source.searchParams.set("latitude", "37.5665");
+  source.searchParams.set("longitude", "126.978");
+  source.searchParams.set("current", "temperature_2m");
+  source.searchParams.set("timezone", TIME_ZONE);
+  source.searchParams.set("temperature_unit", "celsius");
+
+  const payload = {
+    latitude: 37.55,
+    longitude: 126.98,
+    generationtime_ms: 0.1,
+    utc_offset_seconds: 32400,
+    timezone: TIME_ZONE,
+    timezone_abbreviation: "GMT+9",
+    elevation: 38,
+    current_units: {
+      time: "iso8601",
+      interval: "seconds",
+      temperature_2m: "°C"
+    },
+    current: {
+      time: `${day}T${String(observedHour).padStart(2, "0")}:00`,
+      interval,
+      temperature_2m: value
+    }
+  };
+
+  return normalizeWeatherResponse(
+    payload,
+    source.toString(),
+    new Date(`${day}T${String(fetchedHour).padStart(2, "0")}:05:00+09:00`)
+  );
+}
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function runSyntheticSuite() {
+  const checks = [];
+  const check = (id, description, action) => {
+    try {
+      action();
+      checks.push({ id, description, passed: true, detail: "통과" });
+    } catch (error) {
+      checks.push({ id, description, passed: false, detail: error instanceof Error ? error.message : "확인 실패" });
+    }
+  };
+
+  const adapter = createSyntheticAdapter();
+  let d1A;
+  let d1B;
+  let d1C;
+  let dayTwo;
+  let d1Snapshot;
+  let recoveredSnapshot;
+
+  check("T04-SYN-D1", "합성 D1-A → D1-B 정상 재생 및 같은 KST 날짜 3회 성공 갱신", () => {
+    d1A = makeSyntheticRecord({ day: "2031-05-17", observedHour: 8, value: 18.2, fetchedHour: 8 });
+    d1B = makeSyntheticRecord({ day: "2031-05-17", observedHour: 9, value: 18.7, fetchedHour: 9 });
+    d1C = makeSyntheticRecord({ day: "2031-05-17", observedHour: 10, value: 19.1, fetchedHour: 10 });
+
+    const first = adapter.accept(d1A);
+    assert(first.records.length === 1, "D1-A가 한 건 저장되지 않았습니다.");
+    const second = adapter.accept(d1B);
+    assert(second.records.length === 1, "D1-B가 같은 날짜의 기록을 갱신하지 않았습니다.");
+    assert(second.state.status === "fresh" && second.state.errorCode === "none", "D1-B 정상 상태가 fresh/none이 아닙니다.");
+    d1Snapshot = adapter.accept(d1C);
+    assert(d1Snapshot.records.length === 1, `같은 날짜 행 수가 ${d1Snapshot.records.length}건입니다.`);
+    assert(d1Snapshot.records[0].dateKey === "2031-05-17", "합성 KST 날짜 키가 일치하지 않습니다.");
+    assert(d1Snapshot.records[0].rawValue === 19.1 && d1Snapshot.records[0].normalizedValue === 19.1, "마지막 합성 저장값이 원자료와 일치하지 않습니다.");
+  });
+
+  const lastGood = d1Snapshot?.lastGoodRecord || null;
+  for (const fixture of SYNTHETIC_FAILURES) {
+    check(fixture.id, `${fixture.name}: 마지막 정상값 보존 및 별도 stale 오류 상태`, () => {
+      assert(lastGood, "실패 fixture에 사용할 합성 정상 기록이 없습니다.");
+      assert(ERROR_CODES.includes(fixture.code), "실패 코드가 adapter 계약 목록에 없습니다.");
+      const failed = adapter.fail(fixture.code);
+      assert(failed.state.errorCode === fixture.code, "실패 코드가 다른 오류와 구분되지 않습니다.");
+      assert(failed.state.status === "stale", "마지막 정상값이 있는데 stale 상태가 아닙니다.");
+      assert(failed.lastGoodRecord === lastGood, "실패 후 마지막 정상값이 보존되지 않았습니다.");
+      assert(failed.records.length === 1 && failed.records[0] === lastGood, "실패가 정상 저장 기록을 변경했습니다.");
+    });
+  }
+
+  check("T04-C19", "합성 recover-d2: fresh/none 복구 및 다음 날짜 기록 한 건 추가", () => {
+    assert(lastGood, "복구 전에 정상 기록이 없습니다.");
+    const beforeCount = adapter.snapshot().records.length;
+    dayTwo = makeSyntheticRecord({ day: "2031-05-18", observedHour: 8, value: 20.4, fetchedHour: 8 });
+    recoveredSnapshot = adapter.accept(dayTwo);
+    assert(recoveredSnapshot.state.status === "fresh", "복구 상태가 fresh가 아닙니다.");
+    assert(recoveredSnapshot.state.errorCode === "none", "복구 error_code가 none이 아닙니다.");
+    assert(recoveredSnapshot.records.length === beforeCount + 1, "다음 날짜 기록이 정확히 한 건 추가되지 않았습니다.");
+    assert(recoveredSnapshot.records.some((record) => record.dateKey === "2031-05-18"), "다음 날짜 키가 없습니다.");
+  });
+
+  check("T04-C24-SYN", "두 합성 날짜의 저장값으로 전일 변화 재계산", () => {
+    assert(d1C && dayTwo && recoveredSnapshot, "합성 날짜 기록이 없습니다.");
+    const change = getDailyChange(recoveredSnapshot.records, "2031-05-18");
+    assert(change.status === "ok", "두 합성 날짜 변화값을 계산할 수 없습니다.");
+    assert(change.delta === 1.3, `계산된 변화값이 1.3이 아니라 ${change.delta}입니다.`);
+  });
+
+  return {
+    label: "합성 시험값만 사용 · 실제 관측/저장 기록과 분리됨",
+    checks,
+    allPassed: checks.every((item) => item.passed),
+    syntheticRecords: { d1A, d1B, d1C, dayTwo },
+    recoveredRecords: recoveredSnapshot?.records || adapter.snapshot().records,
+    recoveredState: recoveredSnapshot?.state || adapter.snapshot().state,
+    finalCount: (recoveredSnapshot?.records || adapter.snapshot().records).length
+  };
+}
+
+const ids = [
+  "refresh-button", "live-status", "fresh-view", "error-view", "error-title", "error-message",
+  "retry-button", "last-value-section", "last-good-value", "last-good-meta", "value-view", "unit-view",
+  "timezone-view", "raw-value-view", "stored-value-view", "screen-value-view", "raw-time-view",
+  "source-time-view", "fetch-time-view", "source-url-view", "freshness-label", "record-status", "daily-log",
+  "change-view", "change-explanation", "storage-notice", "test-toggle", "test-panel", "test-results",
+  "test-summary", "reset-tests", "source-link"
+];
+
+const elements = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
+let localStorageRef = null;
+let storageAccessIssue = null;
+try {
+  localStorageRef = window.localStorage;
+} catch {
+  storageAccessIssue = "storage_unavailable";
+}
+
+const adapter = createWeatherAdapter({
+  fetchImpl: (...args) => globalThis.fetch(...args),
+  storage: localStorageRef,
+  now: () => new Date(),
+  isOnline: () => navigator.onLine,
+  timeoutMs: 18000
+});
+
+const ERROR_COPY = Object.freeze({
+  timeout: {
+    title: "응답이 늦어요",
+    message: "요청 제한 시간 안에 공개 원천이 응답하지 않았습니다. 연결을 확인하고 잠시 뒤 다시 시도해 주세요."
+  },
+  http_401_403: {
+    title: "공개 원천이 요청을 거절했어요",
+    message: "원천에서 HTTP 401/403 응답을 반환했습니다. 호출 주소와 공개 원천의 이용 상태를 확인한 뒤 다시 시도해 주세요."
+  },
+  rate_limit: {
+    title: "요청이 잠시 제한됐어요",
+    message: "공개 원천이 HTTP 429 호출 제한을 반환했습니다. 잠시 기다린 뒤 새로고침해 주세요."
+  },
+  offline: {
+    title: "오프라인 상태예요",
+    message: "인터넷 연결이 확인되지 않습니다. 연결을 복구한 뒤 다시 시도해 주세요."
+  },
+  schema_changed: {
+    title: "응답 형식이 달라졌어요",
+    message: "공개 원천 응답에서 기대한 값·단위·시간대 형식을 확인하지 못했습니다. 임의의 값은 표시하지 않습니다. 잠시 뒤 다시 시도해 주세요."
+  },
+  http_error: {
+    title: "공개 원천에서 오류가 발생했어요",
+    message: "원천의 HTTP 응답을 확인하지 못했습니다. 잠시 기다린 뒤 다시 시도해 주세요."
+  },
+  network_error: {
+    title: "네트워크 요청에 실패했어요",
+    message: "공개 원천에 연결할 수 없습니다. 인터넷 연결과 브라우저의 네트워크 접근을 확인해 주세요."
+  }
+});
+
+function formatTimestamp(isoString) {
+  const date = new Date(isoString);
+  if (!Number.isFinite(date.getTime())) return "확인할 수 없음";
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).format(date);
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 1 }).format(value);
+}
+
+function setLive(message) {
+  elements["live-status"].textContent = message;
+}
+
+function setStorageNotice(snapshot) {
+  const note = storageAccessIssue || snapshot.storageIssue || snapshot.state.storageIssue;
+  if (note === "storage_write" || snapshot.state.storageIssue === "storage_write") {
+    elements["storage-notice"].textContent = "응답은 확인했지만 이번 기록을 브라우저 저장 공간에 보존하지 못했습니다. 이 날의 기록이 실제로 남았다고 간주하지 않습니다.";
+    elements["storage-notice"].hidden = false;
+  } else if (note && note !== "storage_unavailable") {
+    elements["storage-notice"].textContent = "기존 브라우저 저장값 일부를 읽을 수 없어 검증된 기록만 표시합니다. 실제 원자료와 일치하지 않는 값은 사용하지 않았습니다.";
+    elements["storage-notice"].hidden = false;
+  } else if (note === "storage_unavailable") {
+    elements["storage-notice"].textContent = "브라우저 저장 공간을 사용할 수 없어 기록이 이 브라우저에 보존되지 않습니다.";
+    elements["storage-notice"].hidden = false;
+  } else {
+    elements["storage-notice"].hidden = true;
+  }
+}
+
+function renderDailyLog(records) {
+  elements["daily-log"].replaceChildren();
+  if (!records.length) {
+    updateReviewTools([]);
+    const empty = document.createElement("p");
+    empty.className = "empty-log";
+    empty.textContent = "아직 저장된 기온이 없습니다.";
+    elements["daily-log"].append(empty);
+    elements["change-view"].textContent = "—";
+    elements["change-explanation"].textContent = "어제와 오늘의 기록이 있으면 기온 차이를 보여 드립니다.";
+    return;
+  }
+
+  const ordered = records.slice().sort((left, right) => left.dateKey.localeCompare(right.dateKey));
+  for (const record of [...ordered].reverse()) {
+    const row = document.createElement("article");
+    row.className = "log-row";
+    const main = document.createElement("div");
+    main.className = "log-main";
+    const date = document.createElement("strong");
+    date.textContent = `${record.dateKey} KST`;
+    const value = document.createElement("span");
+    value.textContent = `${formatNumber(record.normalizedValue)} ${record.unit}`;
+    main.append(date, value);
+
+    const detail = document.createElement("p");
+    detail.className = "log-detail";
+    detail.textContent = `기온 기준 ${record.observedAt.replace("T"," ")} · 확인 ${formatTimestamp(record.fetchedAt)}`;
+    const link = document.createElement('a');link.href=record.sourceUrl;link.textContent='공개 원천 URL';link.target='_blank';link.rel='noopener noreferrer';
+    const raw = document.createElement('details');const summary=document.createElement('summary');summary.textContent='저장 원자료 JSON';const pre=document.createElement('pre');pre.style.overflow='auto';pre.textContent=JSON.stringify({source_observed_at:new Date(record.observedAt+"+09:00").toISOString(),normalized_reading:record.normalized_reading,raw_response:record.rawResponse},null,2);raw.append(summary,pre);
+    const more=document.createElement('details');const label=document.createElement('summary');label.textContent='출처와 원자료';more.append(label,link,raw);row.append(main,detail,more);
+    elements["daily-log"].append(row);
+  }
+
+  updateReviewTools(ordered);
+  const latest = ordered[ordered.length - 1];
+  const change = getDailyChange(ordered, latest.dateKey);
+  if (change.status === "ok") {
+    const sign = change.delta > 0 ? "+" : "";
+    elements["change-view"].textContent = `${sign}${formatNumber(change.delta)} ${latest.unit}`;
+    elements["change-explanation"].textContent = `${change.current.dateKey} 저장값 − ${change.previous.dateKey} 저장값 = ${formatNumber(change.rawDifference)} ${latest.unit}. 일별 정규화 값에서 다시 계산했습니다.`;
+  } else {
+    elements["change-view"].textContent = "비교 기록 대기";
+    elements["change-explanation"].textContent = `${change.previousDate || "어제"}의 기록이 없어 아직 비교할 수 없습니다.`;
+  }
+}
+
+function renderLastGood(record) {
+  if (!record) {
+    elements["last-value-section"].hidden = true;
+    return;
+  }
+  elements["last-value-section"].hidden = false;
+  elements["last-good-value"].textContent = `${formatNumber(record.normalizedValue)} ${record.unit}`;
+  elements["last-good-meta"].textContent = `마지막 정상 원천 기록: ${record.dateKey} KST · 조회 ${formatTimestamp(record.fetchedAt)} · ${record.sourceField}`;
+}
+
+function renderSuccess(snapshot) {
+  const { record } = snapshot.state;
+  if (!record) return;
+
+  elements["error-view"].hidden = true;
+  elements["fresh-view"].hidden = false;
+  elements["value-view"].textContent = formatNumber(record.normalizedValue);
+  elements["unit-view"].textContent = record.unit;
+  elements["source-time-view"].textContent = `${record.observedAt} (${record.timezone})`;
+  elements["fetch-time-view"].textContent = `${formatTimestamp(record.fetchedAt)} (${TIME_ZONE})`;
+  elements["source-time-view"].setAttribute("datetime", `${record.observedAt}+09:00`);
+  elements["fetch-time-view"].setAttribute("datetime", record.fetchedAt);
+  elements["timezone-view"].textContent = record.timezone;
+  elements["raw-value-view"].textContent = `${String(record.rawValue)} ${record.unit}`;
+  elements["stored-value-view"].textContent = `${String(record.normalizedValue)} ${record.unit}`;
+  elements["screen-value-view"].textContent = `${record.displayValue} ${record.unit}`;
+  elements["raw-time-view"].textContent = record.observedAt;
+  elements["source-url-view"].href = record.sourceUrl;
+  elements["source-url-view"].textContent = "Open-Meteo 원천 요청 URL 보기";
+  elements["freshness-label"].textContent = "방금 확인한 기온";
+  elements["record-status"].textContent = snapshot.state.persisted
+    ? "오늘 확인한 기온을 저장했습니다."
+    : "이번 응답은 실제 조회값입니다. 브라우저 저장 공간에는 보존하지 못했을 수 있습니다.";
+  elements["last-value-section"].hidden = true;
+  renderDailyLog(snapshot.records);
+  setStorageNotice(snapshot);
+  setLive(`실제 현재 기온 ${formatNumber(record.normalizedValue)} ${record.unit}. 출처 시각 ${record.observedAt}, 조회 시각 ${formatTimestamp(record.fetchedAt)}, 기준 시간대 ${record.timezone}.`);
+}
+
+function renderFailure(snapshot) {
+  const { state } = snapshot;
+  const copy = ERROR_COPY[state.errorCode] || ERROR_COPY.network_error;
+  if (state.lastGoodRecord) renderSuccess({...snapshot,state:{...state,record:state.lastGoodRecord,persisted:true}});
+  elements["fresh-view"].hidden = !state.lastGoodRecord;
+  elements["error-view"].hidden = false;
+  elements["error-title"].textContent = copy.title;
+  elements["error-message"].textContent = copy.message;
+
+  const lastGood = state.lastGoodRecord;
+  if (lastGood) {
+    elements["last-value-section"].hidden = false;
+    elements["last-good-value"].textContent = `${formatNumber(lastGood.normalizedValue)} ${lastGood.unit}`;
+    elements["last-good-meta"].textContent = `오래된 값 · 마지막 정상 조회 ${formatTimestamp(lastGood.fetchedAt)} · ${lastGood.dateKey} KST. 현재 값으로 취급하지 않습니다.`;
+    elements["freshness-label"].textContent = "업데이트 실패 · 이전 기온입니다";
+  } else {
+    elements["last-value-section"].hidden = true;
+    elements["freshness-label"].textContent = "새 실제 값 없음";
+  }
+  renderDailyLog(snapshot.records);
+  setStorageNotice(snapshot);
+  setLive(lastGood
+    ? `${copy.title} 마지막 정상값은 오래된 값으로 보존되어 있습니다. 다시 시도할 수 있습니다.`
+    : `${copy.title} 실제 값을 확인하지 못했습니다. 다시 시도할 수 있습니다.`);
+}
+
+function renderLoading(snapshot) {
+  elements["error-view"].hidden = true;
+  elements["fresh-view"].hidden = true;
+  elements["freshness-label"].textContent = "공개 원천 조회 중";
+  if (snapshot.lastGoodRecord) {
+    elements["last-value-section"].hidden = false;
+    elements["last-good-value"].textContent = `${formatNumber(snapshot.lastGoodRecord.normalizedValue)} ${snapshot.lastGoodRecord.unit}`;
+    elements["last-good-meta"].textContent = `마지막 정상 조회 ${formatTimestamp(snapshot.lastGoodRecord.fetchedAt)}. 새 응답을 확인하는 중입니다.`;
+  } else {
+    elements["last-value-section"].hidden = true;
+  }
+  setLive("Open-Meteo에서 서울의 실제 현재 기온을 조회하고 있습니다.");
+}
+
+function render(snapshot) {
+  if (snapshot.state.status === "loading") renderLoading(snapshot);
+  else if (snapshot.state.status === "fresh") renderSuccess(snapshot);
+  else if (snapshot.state.status === "stale" || snapshot.state.status === "error") renderFailure(snapshot);
+  else {
+    renderDailyLog(snapshot.records);
+    renderLastGood(snapshot.lastGoodRecord);
+    setStorageNotice(snapshot);
+    setLive("아직 실제 조회 기록이 없습니다. 새로고침을 선택해 공개 원천에 요청하세요.");
+  }
+}
+
+async function refresh() {
+  elements["refresh-button"].disabled = true;
+  elements["retry-button"].disabled = true;
+  try {
+    const result = await adapter.refresh({ onState: render });
+    render(result);
+  } finally {
+    elements["refresh-button"].disabled = false;
+    elements["retry-button"].disabled = false;
+  }
+}
+
+function renderTests() {
+  const suite = runSyntheticSuite();
+  elements["test-results"].replaceChildren();
+  const heading = document.createElement("li");
+  heading.className = suite.allPassed ? "test-summary pass" : "test-summary fail";
+  heading.textContent = suite.allPassed
+    ? `합성 재생 ${suite.checks.length}건 모두 통과`
+    : `${suite.checks.filter((check) => !check.passed).length}건 실패 · 아래에서 확인`;
+  elements["test-results"].append(heading);
+
+  for (const result of suite.checks) {
+    const row = document.createElement("li");
+    row.className = result.passed ? "test-pass" : "test-fail";
+    row.textContent = `${result.passed ? "통과" : "실패"} · ${result.id} · ${result.description}${result.passed ? "" : ` — ${result.detail}`}`;
+    elements["test-results"].append(row);
+  }
+  elements["test-summary"].textContent = suite.label;
+}
+
+elements["refresh-button"].addEventListener("click", () => void refresh());
+elements["retry-button"].addEventListener("click", () => void refresh());
+elements["test-toggle"].addEventListener("click", () => {
+  const opening = elements["test-panel"].hidden;
+  elements["test-panel"].hidden = !opening;
+  elements["test-toggle"].setAttribute("aria-expanded", String(opening));
+  if (opening) renderTests();
+});
+elements["reset-tests"].addEventListener("click", renderTests);
+elements["source-link"].href = adapter.requestUrl;
+
+
+let reviewRows=[];
+function updateReviewTools(records){reviewRows=records.slice();const select=document.getElementById('receipt-day');const selected=select.value;select.replaceChildren();for(const r of [...records].reverse()){const option=document.createElement('option');option.value=r.dateKey;option.textContent=r.dateKey+' · '+r.normalizedValue+' '+r.unit;select.append(option);}if(records.some(r=>r.dateKey===selected))select.value=selected;select.disabled=!records.length;document.getElementById('export-review').disabled=!records.length;updateReceiptFields();const target=document.getElementById('two-day-review');target.replaceChildren();if(records.length<2){const p=document.createElement('p');p.textContent=records.length?'실제 첫날 기록 1건. 다음 실제 KST 날짜에 다시 조회하세요.':'실제 기록이 없습니다. 먼저 실제 기온을 조회하세요.';target.append(p);return;}const pair=records.slice(-2);const wrap=document.createElement('div');wrap.className='table-wrap';const table=document.createElement('table');const head=document.createElement('tr');for(const text of ['조회 날짜 · KST','원자료','저장값','화면값','원천 관측 시각']){const th=document.createElement('th');th.textContent=text;head.append(th);}const thead=document.createElement('thead');thead.append(head);table.append(thead);const tbody=document.createElement('tbody');for(const r of pair){const row=document.createElement('tr');for(const text of [r.dateKey,String(r.rawValue)+' '+r.unit,String(r.normalizedValue)+' '+r.unit,r.displayValue+' '+r.unit,new Date(r.observedAt+'+09:00').toISOString()]){const td=document.createElement('td');td.textContent=text;row.append(td);}tbody.append(row);}table.append(tbody);wrap.append(table);const p=document.createElement('p');const delta=pair[1].normalizedValue-pair[0].normalizedValue;p.textContent=pair[1].normalizedValue+' − '+pair[0].normalizedValue+' = '+Number(delta.toFixed(1))+' '+pair[1].unit+' · 실제 저장값으로 재계산. '+(shiftDateKey(pair[1].dateKey,-1)===pair[0].dateKey?'연속된 날짜이므로 어제 대비입니다.':'두 기록은 연속된 날짜가 아니므로 어제 대비 표시와 구분합니다.');target.append(wrap,p);}
+function updateReceiptFields(){const r=reviewRows.find(r=>r.dateKey===document.getElementById('receipt-day').value);for(const [id,value] of Object.entries({'receipt-url':r?.sourceUrl??'','receipt-time':r?new Date(r.observedAt+'+09:00').toISOString():'','receipt-value':r?String(r.normalizedValue):'','receipt-unit':r?.unit??''})){document.getElementById(id).value=value;}document.querySelectorAll('[data-copy]').forEach(b=>b.disabled=!r);}
+async function copyText(text){try{await navigator.clipboard.writeText(text);document.getElementById('copy-status').textContent='복사했습니다. ALEPH의 해당 칸에 붙여 넣으세요.';}catch{document.getElementById('copy-status').textContent='자동 복사를 사용할 수 없습니다. 입력칸의 값을 선택해 직접 복사하세요.';}}
+document.getElementById('receipt-day').onchange=updateReceiptFields;
+document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>copyText(document.getElementById(b.dataset.copy).value));
+document.getElementById('copy-guide').onclick=()=>copyText('어디에서: 공개 정보판 하단 검사 화면의 실패 실험.\n무엇을 하면: 정상 기준 준비 → T04-TIMEOUT → 다시 시도 (3단계).\n통과 모습: 105 pt / stale / timeout / 1행에서 120 pt / fresh / none / 2행으로 복구, 변화 +15 pt, 같은 날짜 ID 유지.\n안 될 때: 오류 종류별 설명과 다음 행동, 오래된 마지막 정상값과 일별 기록 보존.');
+document.getElementById('export-review').onclick=()=>{const records=reviewRows.filter(isValidDailyRecord);if(!records.length)return;const clone=document.documentElement.cloneNode(true);clone.querySelectorAll('button').forEach(b=>b.disabled=false);clone.querySelector('#replay-rows').replaceChildren();clone.querySelector('#canonical-results').replaceChildren();clone.querySelector('#test-results').replaceChildren();clone.querySelector('#preserved-live-data').textContent=JSON.stringify(records).replaceAll('<','\\u003c');const exported='<!doctype html>\n'+clone.outerHTML;const url=URL.createObjectURL(new Blob([exported],{type:'text/html;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='index.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);document.getElementById('export-status').textContent=records.length+'개 실제 일별 기록을 포함한 HTML을 내려받았습니다. 공개 배포 후 새 시크릿 창에서 기록을 확인하세요.';};
+
+let preservedRecords=[];
+try {const seed=JSON.parse(document.getElementById('preserved-live-data').textContent);preservedRecords=sortDailyRecords(seed);if(preservedRecords.length!==seed.length)throw Error('invalid preserved records');if(preservedRecords.length){document.getElementById('review-mode').hidden=false;document.getElementById('archived-review').hidden=false;document.getElementById('archived-records').textContent=JSON.stringify(preservedRecords,null,2);}} catch {document.getElementById('copy-status').textContent='보존본 데이터 형식을 확인하지 못했습니다.';}
+const initialLive=adapter.snapshot();
+if(preservedRecords.length){const record=preservedRecords.at(-1);render({...initialLive,records:preservedRecords,lastGoodRecord:record,state:{status:'fresh',errorCode:'none',record,persisted:false}});elements['freshness-label'].textContent='보존된 실제 기록 · 현재 실시간 값 아님';elements['record-status'].textContent='HTML에 포함된 실제 성공 조회의 보존본입니다. 현재 실시간 조회가 아닙니다.';}
+else {render(initialLive);void refresh().catch((error)=>{setLive('화면 요청 오류: 다시 시도해 주세요.');elements['refresh-button'].disabled=false;elements['retry-button'].disabled=false;});}
+
+{
+const fixtures=[{"fixture_id":"T04-AUTH-401","contract_version":"1.1.0","description_ko":"외부 출처가 인증을 거절한 응답: auth를 기록한다.","virtual_now":"2026-08-24T10:01:00.000Z","transport":{"mode":"http","status":401,"delay_ms":20,"deadline_ms":1500,"headers":{"content-type":"application/json"}},"payload":{"message":"unauthorized synthetic fixture"},"expected":{"freshness":"stale","error_code":"auth","row_count":1,"stored_value":105,"delta":null,"preserve_last_good":true}},{"fixture_id":"T04-NORMAL-D1-A","contract_version":"1.1.0","description_ko":"가상 1일차 첫 정상 조회: 새 일별 행을 만든다.","virtual_now":"2026-08-24T00:00:00.000Z","transport":{"mode":"http","status":200,"delay_ms":20,"deadline_ms":1500,"headers":{"content-type":"application/json"}},"payload":{"signal_id":"aleph-demo-index","normalized_value":100,"unit":"pt","source_name":"ALEPH 결정론 replay","source_url":"https://fixtures.aleph.invalid/t04/demo-index","source_time":"2026-08-23T23:59:00.000Z","fetched_at":"2026-08-24T00:00:00.000Z","record_timezone":"Asia/Seoul","record_date":"2026-08-24"},"expected":{"freshness":"fresh","error_code":"none","row_count":1,"stored_value":100,"delta":null,"preserve_last_good":true,"record_date":"2026-08-24"}},{"fixture_id":"T04-NORMAL-D1-B","contract_version":"1.1.0","description_ko":"가상 1일차 두 번째 정상 조회: 새 행 없이 같은 행을 갱신한다.","virtual_now":"2026-08-24T09:00:00.000Z","transport":{"mode":"http","status":200,"delay_ms":20,"deadline_ms":1500,"headers":{"content-type":"application/json"}},"payload":{"signal_id":"aleph-demo-index","normalized_value":105,"unit":"pt","source_name":"ALEPH 결정론 replay","source_url":"https://fixtures.aleph.invalid/t04/demo-index","source_time":null,"fetched_at":"2026-08-24T09:00:00.000Z","record_timezone":"Asia/Seoul","record_date":"2026-08-24"},"expected":{"freshness":"fresh","error_code":"none","row_count":1,"stored_value":105,"delta":null,"preserve_last_good":true,"same_record_id_as":"T04-NORMAL-D1-A","record_date":"2026-08-24"}},{"fixture_id":"T04-NORMAL-D2","contract_version":"1.1.0","description_ko":"가상 2일차 정상 조회: 새 행과 전일 대비 +15를 만든다.","virtual_now":"2026-08-25T00:00:00.000Z","transport":{"mode":"http","status":200,"delay_ms":20,"deadline_ms":1500,"headers":{"content-type":"application/json"}},"payload":{"signal_id":"aleph-demo-index","normalized_value":120,"unit":"pt","source_name":"ALEPH 결정론 replay","source_url":"https://fixtures.aleph.invalid/t04/demo-index","source_time":"2026-08-24T23:59:00.000Z","fetched_at":"2026-08-25T00:00:00.000Z","record_timezone":"Asia/Seoul","record_date":"2026-08-25"},"expected":{"freshness":"fresh","error_code":"none","row_count":2,"stored_value":120,"delta":15,"preserve_last_good":true,"record_date":"2026-08-25"}},{"fixture_id":"T04-OFFLINE","contract_version":"1.1.0","description_ko":"네트워크 연결 중단: 마지막 정상값을 보존하고 offline을 기록한다.","virtual_now":"2026-08-24T10:03:00.000Z","transport":{"mode":"offline","status":null,"delay_ms":0,"deadline_ms":1500,"headers":{}},"payload":null,"expected":{"freshness":"stale","error_code":"offline","row_count":1,"stored_value":105,"delta":null,"preserve_last_good":true}},{"fixture_id":"T04-RATE-429","contract_version":"1.1.0","description_ko":"외부 출처의 호출 제한 응답: rate_limit과 Retry-After 관측값을 기록한다.","virtual_now":"2026-08-24T10:02:00.000Z","transport":{"mode":"http","status":429,"delay_ms":20,"deadline_ms":1500,"headers":{"content-type":"application/json","retry-after":"60"}},"payload":{"message":"rate limited synthetic fixture"},"expected":{"freshness":"stale","error_code":"rate_limit","row_count":1,"stored_value":105,"delta":null,"preserve_last_good":true}},{"fixture_id":"T04-RECOVER-D2","contract_version":"1.1.0","description_ko":"오류 뒤 가상 2일차 재시도 성공: fresh/none으로 회복하고 전일 대비 +15를 만든다.","virtual_now":"2026-08-25T00:00:00.000Z","transport":{"mode":"http","status":200,"delay_ms":20,"deadline_ms":1500,"headers":{"content-type":"application/json"}},"payload":{"signal_id":"aleph-demo-index","normalized_value":120,"unit":"pt","source_name":"ALEPH 결정론 replay","source_url":"https://fixtures.aleph.invalid/t04/demo-index","source_time":"2026-08-24T23:59:00.000Z","fetched_at":"2026-08-25T00:00:00.000Z","record_timezone":"Asia/Seoul","record_date":"2026-08-25"},"expected":{"freshness":"fresh","error_code":"none","row_count":2,"stored_value":120,"delta":15,"preserve_last_good":true,"record_date":"2026-08-25"}},{"fixture_id":"T04-SCHEMA-BREAK","contract_version":"1.1.0","description_ko":"HTTP 성공이지만 필수값 타입이 바뀐 응답: schema_error를 기록한다.","virtual_now":"2026-08-24T10:04:00.000Z","transport":{"mode":"http","status":200,"delay_ms":20,"deadline_ms":1500,"headers":{"content-type":"application/json"}},"payload":{"signal_id":"aleph-demo-index","normalized_value":"105","unit":"pt","source_name":"ALEPH 결정론 replay","source_url":"https://fixtures.aleph.invalid/t04/demo-index","source_time":null,"fetched_at":"2026-08-24T10:04:00.000Z","record_timezone":"Asia/Seoul","record_date":"2026-08-24"},"expected":{"freshness":"stale","error_code":"schema_error","row_count":1,"stored_value":105,"delta":null,"preserve_last_good":true}},{"fixture_id":"T04-TIMEOUT","contract_version":"1.1.0","description_ko":"제한시간보다 늦은 응답: 마지막 정상값을 보존하고 timeout을 기록한다.","virtual_now":"2026-08-24T10:00:00.000Z","transport":{"mode":"timeout","status":null,"delay_ms":5000,"deadline_ms":1500,"headers":{}},"payload":null,"expected":{"freshness":"stale","error_code":"timeout","row_count":1,"stored_value":105,"delta":null,"preserve_last_good":true}}];
+let state=resetEvaluationState();
+const el=id=>document.getElementById(id);
+function render(){const r=state.current_reading;el('replay-status').textContent=r?`합성값 ${r.normalized_value} ${r.unit} · ${state.status.freshness} / ${state.status.error_code} · 일별 ${state.daily_readings.length}행 · 변화 ${state.last_delta===null?'비교 기록 대기':'+'+state.last_delta+' '+r.unit}${state.status.freshness==='stale'?' · 오래된 값':''}`:'합성 상태가 비었습니다.';el('fixture-explanation').textContent={"timeout":"응답 시간이 초과됐습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.","auth":"외부 원천이 HTTP 401/403으로 요청을 거절했습니다. 공개 호출 주소와 원천 이용 상태를 확인하세요. 이 앱에 로그인할 필요는 없습니다.","rate_limit":"외부 원천의 HTTP 429 호출 제한입니다. Retry-After 60초 뒤 재시도하세요. 합성 복구는 아래 버튼으로 즉시 확인할 수 있습니다.","offline":"네트워크가 끊긴 합성 상황입니다. 연결을 복구한 뒤 다시 시도하세요.","schema_error":"응답의 숫자 타입 또는 필수 필드가 달라졌습니다. 원 응답 형식을 확인하고 수정한 뒤 다시 시도하세요."}[state.status?.error_code] || (r ? '정상 응답을 저장했습니다. 같은 날짜는 동일 ID를 갱신하고 다음 날짜는 새 행을 만듭니다.' : '먼저 D1-A와 D1-B를 재생하세요.'); el('replay-state').textContent=JSON.stringify(state,null,2);el('fixture-retry').hidden=state.status?.freshness!=='stale';}
+function play(f){state=runFixture(state,f);render();renderReplayRows();}
+el('fixture-buttons').replaceChildren();for(const f of fixtures){const b=document.createElement('button');b.className='button';b.textContent=f.fixture_id;b.title=f.description_ko;b.onclick=()=>play(f);el('fixture-buttons').append(b);}
+
+function renderReplayRows(){const target=el('replay-rows');target.replaceChildren();for(const row of state.daily_readings){const p=document.createElement('p');p.textContent=row.record_date+' · '+row.normalized_value+' '+row.unit+' · ID '+row.record_id;target.append(p);}}
+el('canonical-test').onclick=()=>{const results=el('canonical-results');results.replaceChildren();for(const f of fixtures){let s=resetEvaluationState();const get=id=>fixtures.find(x=>x.fixture_id===id);if(f.fixture_id!=='T04-NORMAL-D1-A'){s=runFixture(s,get('T04-NORMAL-D1-A'));s=runFixture(s,get('T04-NORMAL-D1-B'));}if(f.fixture_id==='T04-RECOVER-D2')s=runFixture(s,get('T04-TIMEOUT'));const before=JSON.stringify(s.daily_readings);const id=s.daily_readings[0]?.record_id;s=runFixture(s,f);const e=f.expected;const pass=s.status.freshness===e.freshness&&s.status.error_code===e.error_code&&s.daily_readings.length===e.row_count&&s.current_reading?.normalized_value===e.stored_value&&s.last_delta===e.delta&&(!id||id===s.daily_readings[0].record_id)&&(e.error_code==='none'||before===JSON.stringify(s.daily_readings));const li=document.createElement('li');li.textContent=(pass?'통과':'실패')+' · '+f.fixture_id+' · '+s.status.freshness+'/'+s.status.error_code+' · '+s.daily_readings.length+'행';li.className=pass?'test-pass':'test-fail';results.append(li);}};
+
+el('fixture-baseline').onclick=()=>{state=resetEvaluationState();play(fixtures.find(f=>f.fixture_id==='T04-NORMAL-D1-A'));play(fixtures.find(f=>f.fixture_id==='T04-NORMAL-D1-B'));};
+el('fixture-reset').onclick=()=>{state=resetEvaluationState();render();renderReplayRows();};el('fixture-retry').onclick=()=>play(fixtures.find(f=>f.fixture_id==='T04-RECOVER-D2'));render();renderReplayRows();
+
+}
+</script>
+</body>
+</html>
+
